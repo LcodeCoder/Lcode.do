@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         LcodeDO
 // @namespace    http://tampermonkey.net/
-// @version      0.0.6
-// @description  在 Linux.do 和 IDCFlare 页面显示信任级别进度，支持历史趋势、里程碑通知、阅读时间统计、排行榜系统、我的活动查看、自动阅读（自上而下自动浏览文章，可设置每篇停留时长）、帖子标题悬浮预览（悬停即弹窗展示帖子信息）。两站点均支持排行榜和云同步功能
+// @version      0.0.7
+// @description  在 Linux.do 和 IDCFlare 页面显示信任级别进度，支持历史趋势、里程碑通知、阅读时间统计、阅读沙漏计时器（折叠态）、每日目标环、阅读速度统计、防沉迷提醒、已读帖子标记、继续阅读（断点续读）、自动阅读（仅未读，可设置每篇停留时长）、帖子标题悬浮预览。两站点均支持排行榜和云同步功能
 // @author       JackLiii
 // @license      MIT
 // @match        https://linux.do/*
@@ -4108,12 +4108,12 @@
     .ldsp-tabs-auto.ldsp-main-tabs-scroll{justify-content:flex-start;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:var(--scrollbar) transparent;-webkit-overflow-scrolling:touch}
     .ldsp-tabs-auto.ldsp-main-tabs-scroll .ldsp-tab{flex:0 0 auto;min-width:max-content}
     .ldsp-tabs-auto.ldsp-main-tabs-scroll .ldsp-tab .ldsp-tab-text{overflow:visible;text-overflow:clip;white-space:nowrap}
-    /* 主导航固定两项（要求/已读），始终平分整条宽度，不因溢出检测收成一侧留白 */
+    /* 主导航固定三项（要求/阅读/历史），始终平分整条宽度，不因溢出检测收成一侧留白 */
     .ldsp-tabs-auto .ldsp-tab{flex:1 1 0;min-width:0}
     .ldsp-tabs-auto.ldsp-main-tabs-scroll{justify-content:stretch;overflow-x:hidden}
     .ldsp-tabs-auto.ldsp-main-tabs-scroll .ldsp-tab{flex:1 1 0;min-width:0}
     .ldsp-tabs-auto.ldsp-main-tabs-scroll .ldsp-tab .ldsp-tab-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    /* fix: 主导航固定两项（要求/已读），强制始终平分整条宽度，杜绝溢出误判导致一侧留白 */
+    /* fix: 主导航固定三项（要求/阅读/历史），强制始终平分整条宽度，杜绝溢出误判导致一侧留白 */
     #ldsp-panel .ldsp-tabs.ldsp-tabs-auto{justify-content:stretch !important;overflow-x:hidden !important;padding:2px !important;gap:0 !important}
     #ldsp-panel .ldsp-tabs.ldsp-tabs-auto>.ldsp-tab-indicator{display:none !important;position:absolute !important;inset:0 auto auto 0 !important;width:0 !important;min-width:0 !important;max-width:0 !important;height:0 !important;flex:0 0 0 !important;margin:0 !important;padding:0 !important;overflow:hidden !important;pointer-events:none !important}
     #ldsp-panel .ldsp-tabs.ldsp-tabs-auto .ldsp-tab{flex:1 1 0 !important;min-width:0 !important;width:auto !important}
@@ -11775,7 +11775,7 @@ a:hover{text-decoration:underline;}
                                     </button>
                                 </div>
                             </div>
-                            <button class="ldsp-toggle" title="折叠面板" aria-label="折叠面板"><span class="ldsp-toggle-arrow">◀</span><img class="ldsp-toggle-logo" src="${COLLAPSED_LOGO_DATA_URI}" alt="" aria-hidden="true" draggable="false"></button>
+                            <button class="ldsp-toggle" title="折叠面板" aria-label="折叠面板"><span class="ldsp-toggle-arrow">◀</span><img class="ldsp-toggle-logo" src="${COLLAPSED_LOGO_DATA_URI}" alt="" aria-hidden="true" draggable="false"><span class="ldsp-toggle-hourglass" aria-hidden="true" title="今日阅读时长（点击展开）"><svg class="ldsp-hg-svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M6 3 H18 L12.8 11 L18 21 H6 L11.2 11 Z" fill="rgba(255,255,255,.14)"></path><path class="ldsp-hg-sand-top" d="M8 5 H16 L12 9.4 Z" fill="#fbbf24" stroke="none"></path><path class="ldsp-hg-sand-bot" d="M9 19 H15 L12 14.6 Z" fill="#f59e0b" stroke="none"></path><line class="ldsp-hg-stream" x1="12" y1="11" x2="12" y2="13.4" stroke="#fbbf24" stroke-width="1.4"></line></svg><span class="ldsp-hg-time">0m</span></span></button>
                         </div>
                     </div>
                     <div class="ldsp-body">
@@ -11814,10 +11814,12 @@ a:hover{text-decoration:underline;}
                         </div>
                         <div class="ldsp-tabs ldsp-tabs-auto">
                             <button class="ldsp-tab active" data-tab="reqs"><span class="ldsp-tab-icon">📋</span><span class="ldsp-tab-text">要求</span></button>
-                            <button class="ldsp-tab" data-tab="trends"><span class="ldsp-tab-icon">📖</span><span class="ldsp-tab-text">已读</span></button>
+                            <button class="ldsp-tab" data-tab="reading"><span class="ldsp-tab-icon">⌛</span><span class="ldsp-tab-text">阅读</span></button>
+                            <button class="ldsp-tab" data-tab="trends"><span class="ldsp-tab-icon">📖</span><span class="ldsp-tab-text">历史</span></button>
                         </div>
                         <div class="ldsp-content">
                             <div id="ldsp-reqs" class="ldsp-section active"><div class="ldsp-loading"><div class="ldsp-spinner"></div><div>加载中...</div></div></div>
+                            <div id="ldsp-reading" class="ldsp-section"><div class="ldsp-loading"><div class="ldsp-spinner"></div><div>加载中...</div></div></div>
                             <div id="ldsp-trends" class="ldsp-section"><div class="ldsp-empty"><div class="ldsp-empty-icon">📖</div><div class="ldsp-empty-txt">加载中...</div></div></div>
                         </div>
                         <div class="ldsp-confirm-overlay">
@@ -12023,7 +12025,15 @@ a:hover{text-decoration:underline;}
                 this.$.btnToggle.addEventListener('click', e => {
                     e.stopPropagation();
                     if (moved) { moved = false; return; }
+                    const wasCollapsed = this.el.classList.contains('collapsed');
                     this._toggle();
+                    // 从折叠态的沙漏展开 → 自动切换到「阅读」tab
+                    if (wasCollapsed) {
+                        requestAnimationFrame(() => {
+                            const t = this.el.querySelector('.ldsp-tab[data-tab="reading"]');
+                            if (t) t.click();
+                        });
+                    }
                 });
 
                 this.$.btnRefresh.addEventListener('click', () => {
@@ -12369,6 +12379,8 @@ a:hover{text-decoration:underline;}
                         if (tab.dataset.tab === 'reqs') {
                             this.animRing = true;
                             this.cachedReqs.length && this.renderer.renderReqs(this.cachedReqs);
+                        } else if (tab.dataset.tab === 'reading') {
+                            this._renderReadingDashboard();
                         } else if (tab.dataset.tab === 'trends') {
                             this._loadReadTopicsIntoTrends();
                         } else if (tab.dataset.tab === 'leaderboard') {
@@ -12481,7 +12493,7 @@ a:hover{text-decoration:underline;}
                 const prevHidden = container.classList.contains('ldsp-main-icons-hidden');
                 const prevScroll = container.classList.contains('ldsp-main-tabs-scroll');
 
-                // 主导航固定为两项（要求/已读），始终平分整条宽度。
+                // 主导航固定为三项（要求/阅读/历史），始终平分整条宽度。
                 // 不再做首帧后的溢出检测切换，避免短暂正确后又加回压缩/滚动 class 造成左侧留白回弹。
                 container.classList.remove('ldsp-main-icons-hidden');
                 container.classList.remove('ldsp-main-tabs-scroll');
@@ -14943,6 +14955,29 @@ a:hover{text-decoration:underline;}
                 this._loadReadTopicsIntoTrends();
             }
 
+            // 渲染「阅读」tab 的阅读仪表盘（委托给 ReadingHUD）
+            _renderReadingDashboard() {
+                const el = this.el?.querySelector('#ldsp-reading');
+                if (!el) return;
+                if (readingHUD && typeof readingHUD.renderDashboardInto === 'function') {
+                    readingHUD.renderDashboardInto(el);
+                } else {
+                    el.innerHTML = `<div class="ldsp-empty"><div class="ldsp-empty-icon">⌛</div><div class="ldsp-empty-txt">阅读仪表盘加载中…</div></div>`;
+                }
+            }
+
+            // 展开面板（若折叠）并切换到「阅读」tab（供右下角沙漏点击调用）
+            openReadingTab() {
+                if (this._destroyed) return;
+                if (this.el.classList.contains('collapsed')) {
+                    try { this._toggle(); } catch (e) {}
+                }
+                requestAnimationFrame(() => {
+                    const t = this.el.querySelector('.ldsp-tab[data-tab="reading"]');
+                    if (t) t.click();
+                });
+            }
+
             async _loadReadTopicsIntoTrends() {
                 const container = this.$.trends;
                 if (!container) return;
@@ -17000,6 +17035,9 @@ a:hover{text-decoration:underline;}
         // 模拟真实阅读以累计阅读时长 / 已读帖子 / 浏览话题等数据。状态通过 GM 存储
         // 持久化，可跨页面跳转继续运行。入口按钮位于面板标题栏（📖），运行时右下角悬浮 HUD。
         let autoReader = null;  // 单例引用，供面板按钮调用
+        let activePanel = null;  // 面板实例引用，供阅读增强模块读取 tracker / 历史 / 阅读目标
+        let readingHUD = null;  // 阅读沙漏 HUD 单例
+        let topicEnhancer = null;  // 话题列表增强（已读标记 / 断点续读）单例
         class AutoReader {
             static STATE_KEY = 'ldsp_autoread_state';   // 运行状态（跨页面持久）
             static CFG_KEY = 'ldsp_autoread_cfg';       // 用户配置（时长 / 滚动）
@@ -17058,6 +17096,7 @@ a:hover{text-decoration:underline;}
             _collectTopics() {
                 const seen = new Set();
                 const list = [];
+                const visited = ReadHistoryStore.getVisited(); // 已读话题集合（跨页面持久）
                 const sel = 'a.title.raw-topic-link, a.raw-topic-link, tr.topic-list-item a.title, .topic-list-item a.title';
                 document.querySelectorAll(sel).forEach(a => {
                     const href = a.getAttribute('href') || '';
@@ -17067,8 +17106,11 @@ a:hover{text-decoration:underline;}
                     // 归一化：保留 /t/<slug>/<id>，去掉结尾的楼层号与查询，确保从头阅读
                     abs = abs.replace(/(\/t\/[^/?#]+\/\d+)(?:\/\d+)?(?:[?#].*)?$/, '$1');
                     if (!/\/t\//.test(abs) || seen.has(abs)) return;
+                    const id = (abs.match(/\/t\/[^/?#]+\/(\d+)/) || [])[1];
+                    // 跳过已读话题，只阅读未读的
+                    if (id && visited.has(id)) return;
                     seen.add(abs);
-                    list.push({ url: abs, title: (a.textContent || '').replace(/\s+/g, ' ').trim() });
+                    list.push({ url: abs, id, title: (a.textContent || '').replace(/\s+/g, ' ').trim() });
                 });
                 return list;
             }
@@ -17076,15 +17118,35 @@ a:hover{text-decoration:underline;}
             // ---------- 开始 / 继续 / 结束 ----------
             _start() {
                 const topics = this._collectTopics();
+                const dur = Math.max(5, this.cfg.durationSec | 0);
+                const limit = Math.max(0, parseInt(this.cfg.limit, 10) || 0);
+                // 本页话题均已读过 → 自动翻页寻找未读
                 if (!topics.length) {
-                    this._flash('未找到文章列表，请在话题列表页开始');
+                    this.state = {
+                        running: true,
+                        perArticleSec: dur,
+                        autoScroll: !!this.cfg.autoScroll,
+                        limit,
+                        queue: [],
+                        index: 0,
+                        readCount: 0,
+                        visited: [],
+                        listUrl: location.href,
+                        page: 0,
+                        refilling: true,
+                        emptyStreak: 0
+                    };
+                    this._saveState();
+                    this._closePopup();
+                    this._render();
+                    this._flash('本页均已读过，翻页寻找未读…');
+                    this._gotoNextListPage();
                     return;
                 }
                 const queue = topics.slice(0, AutoReader.MAX_QUEUE);
-                const limit = Math.max(0, parseInt(this.cfg.limit, 10) || 0);
                 this.state = {
                     running: true,
-                    perArticleSec: Math.max(5, this.cfg.durationSec | 0),
+                    perArticleSec: dur,
                     autoScroll: !!this.cfg.autoScroll,
                     limit,                       // 0 = 不限，一直刷下去
                     queue,
@@ -17099,7 +17161,7 @@ a:hover{text-decoration:underline;}
                 this._saveState();
                 this._closePopup();
                 this._render();
-                this._flash(limit > 0 ? `▶ 开始自动阅读，计划 ${limit} 篇` : '▶ 开始自动阅读（不限篇数）');
+                this._flash(limit > 0 ? `▶ 开始自动阅读，计划 ${limit} 篇（仅未读）` : '▶ 开始自动阅读（仅未读）');
                 this._navigateTo(queue[0].url);
             }
 
@@ -17937,6 +17999,512 @@ a:hover{text-decoration:underline;}
         }
 
         // ==================== 启动 ====================
+        // ==================== 阅读增强模块 ====================
+        // 包含：阅读沙漏 HUD（会话计时）、每日目标环+达标庆祝、年度热力图、
+        // 阅读速度统计、防沉迷提醒、已读帖子标记、继续阅读（断点续读）。
+        // 全部基于已有的 ReadingTracker / HistoryManager 数据，独立于面板生命周期，
+        // 即使面板初始化失败也能降级运行。
+
+        // 已读历史存储（按用户隔离，原生 GM API）
+        const ReadHistoryStore = (() => {
+            let _storage = null;
+            const st = () => (_storage || (_storage = new Storage()));
+            const ukey = (suffix) => {
+                const u = st().getUser() || 'anon';
+                return `ldsp_${CURRENT_SITE.prefix}_rh_${suffix}_${u}`;
+            };
+            const gkey = (suffix) => `ldsp_${CURRENT_SITE.prefix}_rh_${suffix}`;
+            const VISITED_CAP = 2000;
+            return {
+                getVisited() {
+                    try { return new Set(JSON.parse(GM_getValue(ukey('visited'), '[]'))); }
+                    catch { return new Set(); }
+                },
+                markVisited(topicId) {
+                    if (!topicId) return;
+                    const set = this.getVisited();
+                    if (set.has(topicId)) return;
+                    set.add(topicId);
+                    if (set.size > VISITED_CAP) {
+                        const it = set.values(); set.delete(it.next().value);
+                    }
+                    GM_setValue(ukey('visited'), JSON.stringify([...set]));
+                },
+                getLastTopic() {
+                    try { return JSON.parse(GM_getValue(ukey('lasttopic'), 'null')) || null; }
+                    catch { return null; }
+                },
+                setLastTopic(info) { GM_setValue(ukey('lasttopic'), JSON.stringify(info)); },
+                getAntiFatigue() {
+                    const def = { enabled: true, minutes: 45, lastNotify: 0 };
+                    try { return { ...def, ...JSON.parse(GM_getValue(gkey('antifatigue'), 'null')) }; }
+                    catch { return def; }
+                },
+                setAntiFatigue(cfg) { GM_setValue(gkey('antifatigue'), JSON.stringify(cfg)); },
+                getHidden() { return !!GM_getValue(gkey('hudhidden'), false); },
+                setHidden(v) { GM_setValue(gkey('hudhidden'), !!v); },
+                isGoalNotifiedToday() {
+                    return !!GM_getValue(`ldsp_${CURRENT_SITE.prefix}_rh_goal_${Utils.getTodayKey()}`, false);
+                },
+                markGoalNotifiedToday() {
+                    GM_setValue(`ldsp_${CURRENT_SITE.prefix}_rh_goal_${Utils.getTodayKey()}`, true);
+                }
+            };
+        })();
+
+        // 阅读沙漏 HUD + 阅读仪表盘（目标环 / 热力图 / 速度 / 防沉迷）
+        class ReadingHUD {
+            constructor() {
+                this.root = null;
+                this._panelDash = null;  // 面板内「阅读」tab 的容器
+                this._tick = null;
+                this._sessionSec = 0;
+                this._sessionActive = false;
+                this._lastOwnActivity = 0;
+                this._streakStart = 0;
+                this._wasActive = false;
+                this._goalFlipped = false;
+            }
+
+            get tracker() { return activePanel?.tracker || null; }
+            get goalMinutes() {
+                let h = activePanel?.readingGoalHours;
+                if (h == null) {
+                    try { h = activePanel?.storage?.getGlobal?.('readingGoalHours', 1); } catch { h = 1; }
+                }
+                return Math.max(0.5, Number(h) || 1) * 60;
+            }
+            todayMinutes() { try { return this.tracker?.getTodayTime?.() || 0; } catch { return 0; } }
+            totalMinutes() { try { return this.tracker?.getTotalTime?.() || 0; } catch { return 0; } }
+            yearData() { try { return this.tracker?.getYearData?.() || new Map(); } catch { return new Map(); } }
+            isActiveNow() {
+                if (this.tracker) return !!this.tracker.isActive;
+                return (Date.now() - this._lastOwnActivity) < 60000;
+            }
+            _readPosts() {
+                try {
+                    const hist = activePanel?.historyMgr?.getHistory?.() || [];
+                    if (!hist.length) return 0;
+                    const last = hist[hist.length - 1];
+                    const ed = last?.endData || last?.data || {};
+                    return Utils.toSafeNumber(ed['已读帖子'], 0);
+                } catch { return 0; }
+            }
+            _notify(title, text, timeout = 6000) {
+                try { if (typeof GM_notification === 'function') GM_notification({ title, text, timeout }); } catch (e) {}
+            }
+
+            init() {
+                if (this._tick) return;
+                this._injectStyle();
+                this._bindActivity();
+                this._tick = setInterval(() => this._onTick(), 1000);
+                this._onTick();
+            }
+
+            _bindActivity() {
+                if (this.tracker) return; // 复用 tracker 的活动判定
+                const h = Utils.throttle(() => { this._lastOwnActivity = Date.now(); }, 1000);
+                ['mousedown', 'keydown', 'click', 'touchstart', 'scroll', 'mousemove'].forEach(e =>
+                    document.addEventListener(e, h, { passive: true, capture: true }));
+                this._lastOwnActivity = Date.now();
+            }
+
+            _onTick() {
+                const active = this.isActiveNow();
+                const now = Date.now();
+                if (active) {
+                    this._sessionSec += 1;
+                    this._sessionActive = true;
+                    this._lastOwnActivity = now;
+                } else {
+                    this._sessionActive = false;
+                }
+                // 连续活跃 streak（用于防沉迷）
+                if (active && !this._wasActive) this._streakStart = now;
+                if (!active) this._streakStart = 0;
+                this._wasActive = active;
+
+                this._checkGoal(now);
+                this._checkAntiFatigue(now);
+                this._renderHUD();
+                // 「阅读」tab 处于激活态时，实时刷新面板仪表盘
+                if (this._panelDash && this._panelDash.isConnected && this._panelDash.classList.contains('active')) {
+                    this._updateDashboardLive();
+                }
+            }
+
+            _checkGoal(now) {
+                const today = this.todayMinutes();
+                const goal = this.goalMinutes;
+                if (today >= goal && !ReadHistoryStore.isGoalNotifiedToday()) {
+                    ReadHistoryStore.markGoalNotifiedToday();
+                    this._goalFlipped = true;
+                    setTimeout(() => { this._goalFlipped = false; this._renderHUD(); }, 6000);
+                    this._notify('🎯 今日阅读目标达成！',
+                        `已阅读 ${Utils.formatReadingTime(today)}，达成目标 ${Utils.formatReadingTime(goal)}，继续加油～`);
+                }
+            }
+
+            _checkAntiFatigue(now) {
+                const cfg = ReadHistoryStore.getAntiFatigue();
+                if (!cfg.enabled || !this._streakStart) return;
+                const streakMin = (now - this._streakStart) / 60000;
+                if (streakMin >= cfg.minutes && (now - (cfg.lastNotify || 0)) > 30 * 60000) {
+                    cfg.lastNotify = now;
+                    ReadHistoryStore.setAntiFatigue(cfg);
+                    this._notify('🍵 该歇会儿啦',
+                        `你已连续阅读 ${Math.round(streakMin)} 分钟，起来走走、眺望远方放松一下吧～`, 8000);
+                }
+            }
+
+            _fmtSession(sec) {
+                sec = Math.max(0, Math.floor(sec));
+                const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+                const p = n => String(n).padStart(2, '0');
+                return h > 0 ? `${h}:${p(m)}:${p(s)}` : `${p(m)}:${p(s)}`;
+            }
+
+            _fmtToday(min) {
+                min = Math.max(0, min);
+                if (min < 1) return '0m';
+                if (min < 60) return Math.round(min) + 'm';
+                const h = Math.floor(min / 60), m = Math.round(min % 60);
+                return m > 0 ? `${h}h${m}m` : `${h}h`;
+            }
+
+            _renderHUD() {
+                // 更新面板折叠态的沙漏计时器（显示今日阅读时长，刷新不归零）
+                const panel = activePanel?.el || document.getElementById('ldsp-panel');
+                if (!panel) return;
+                const time = panel.querySelector('.ldsp-hg-time');
+                if (time) time.textContent = this._fmtToday(this.todayMinutes());
+                const hg = panel.querySelector('.ldsp-toggle-hourglass');
+                if (hg) {
+                    hg.classList.toggle('active', this._sessionActive);
+                    hg.classList.toggle('goal-flip', this._goalFlipped);
+                }
+            }
+
+            // ---------- UI ----------
+            _injectStyle() {
+                if (document.getElementById('ldsp-readinghud-styles')) return;
+                const s = document.createElement('style');
+                s.id = 'ldsp-readinghud-styles';
+                s.textContent = `
+    #ldsp-reading-hud{position:fixed;right:16px;bottom:16px;z-index:2147483590;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+    .ldsp-rh-pill{display:flex;align-items:center;gap:7px;padding:7px 12px 7px 10px;border-radius:999px;background:rgba(20,23,30,.8);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1);box-shadow:0 8px 26px -8px rgba(0,0,0,.5);color:#f4f6fa;font-size:12px;cursor:pointer;user-select:none;font-variant-numeric:tabular-nums;line-height:1;transition:transform .18s cubic-bezier(.22,1,.36,1),box-shadow .18s,opacity .2s}
+    .ldsp-rh-pill:hover{transform:translateY(-1px);box-shadow:0 12px 30px -8px rgba(0,0,0,.55)}
+    .ldsp-rh-pill.hidden{opacity:0;width:0;padding:0;border:0;overflow:hidden;pointer-events:none}
+    .ldsp-rh-glass{font-size:15px;display:inline-block;transition:transform .6s cubic-bezier(.85,0,.15,1);transform-origin:center}
+    .ldsp-rh-pill.goal-flip .ldsp-rh-glass{animation:ldsp-rh-flip 1.2s ease}
+    @keyframes ldsp-rh-flip{0%{transform:rotate(0)}50%{transform:rotate(180deg) scale(1.15)}100%{transform:rotate(360deg)}}
+    .ldsp-rh-dot{width:7px;height:7px;border-radius:50%;background:#5a6273;transition:background .3s,box-shadow .3s}
+    .ldsp-rh-dot.active{background:#34c759;box-shadow:0 0 8px rgba(52,199,89,.7)}
+    .ldsp-rh-time{font-weight:600;letter-spacing:.3px}
+    .ldsp-rh-label{color:#9aa3b2;font-size:10px;font-weight:500}
+    .ldsp-rh-mini{display:none;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:rgba(20,23,30,.85);border:1px solid rgba(255,255,255,.12);box-shadow:0 6px 18px -6px rgba(0,0,0,.5);color:#f4f6fa;cursor:pointer;font-size:13px}
+    .ldsp-rh-mini.show{display:flex}
+    .ldsp-rh-mini:hover{transform:translateY(-1px)}
+    .ldsp-rh-dash{width:344px;max-width:92vw;max-height:80vh;overflow-y:auto;background:rgba(18,21,28,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);border-radius:16px;box-shadow:0 20px 56px -12px rgba(0,0,0,.6);color:#f4f6fa;padding:14px;font-size:12px}
+    #ldsp-reading.ldsp-section{overflow-y:auto;padding:12px}
+    #ldsp-reading .ldsp-rh-hint{color:var(--txt-mut)}
+    /* Hero 卡片 */
+    .ldsp-rh-hero{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,rgba(59,130,246,.16),rgba(52,211,153,.12));border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
+    .ldsp-rh-ring{flex-shrink:0;transform:rotate(-90deg);overflow:visible}
+    .ldsp-rh-ring-bg{fill:none;stroke:var(--border);stroke-width:6}
+    .ldsp-rh-ring-fg{fill:none;stroke:#60a5fa;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .6s cubic-bezier(.22,1,.36,1),stroke .3s}
+    .ldsp-rh-ring-txt{fill:var(--txt);font-size:15px;font-weight:800;transform:rotate(90deg);transform-origin:38px 38px}
+    .ldsp-rh-ring-sub{fill:var(--txt-mut);font-size:6px;transform:rotate(90deg);transform-origin:38px 38px;letter-spacing:.5px}
+    .ldsp-rh-hero-info{flex:1;min-width:0}
+    .ldsp-rh-hero-label{font-size:10px;color:var(--txt-mut);margin-bottom:2px;font-weight:600}
+    .ldsp-rh-hero-time{font-size:22px;font-weight:800;color:var(--txt);line-height:1.15;font-variant-numeric:tabular-nums}
+    .ldsp-rh-hero-sub{font-size:10px;color:var(--txt-mut);margin-top:3px}
+    .ldsp-rh-goal-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:7px}
+    .ldsp-rh-goal-bar>i{display:block;height:100%;background:linear-gradient(90deg,#3b82f6,#34d399);border-radius:3px;transition:width .6s cubic-bezier(.22,1,.36,1)}
+    /* 数据 chip */
+    .ldsp-rh-chips{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+    .ldsp-rh-chip{display:flex;flex-direction:column;gap:2px;background:var(--bg-el);border:1px solid var(--border);border-radius:10px;padding:9px 10px}
+    .ldsp-rh-chip-l{font-size:10px;color:var(--txt-mut)}
+    .ldsp-rh-chip-v{font-size:15px;font-weight:700;color:var(--txt);font-variant-numeric:tabular-nums;line-height:1.2}
+    /* 卡片 */
+    .ldsp-rh-card{background:var(--bg-el);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:10px}
+    .ldsp-rh-card-hd{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--txt);margin-bottom:7px}
+    .ldsp-rh-card-ic{font-size:13px}
+    .ldsp-rh-card-bd{font-size:12px;color:var(--txt-sec);line-height:1.6}
+    .ldsp-rh-card-bd b{color:var(--txt);font-weight:800}
+    .ldsp-rh-speed-sep{color:var(--txt-mut);margin:0 5px}
+    /* 防沉迷 */
+    .ldsp-rh-fatigue{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .ldsp-rh-switch{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--txt-sec);cursor:pointer}
+    .ldsp-rh-switch input{display:none}
+    .ldsp-rh-switch-track{width:32px;height:18px;border-radius:10px;background:var(--border);position:relative;transition:background .2s}
+    .ldsp-rh-switch-track::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .2s}
+    .ldsp-rh-switch input:checked + .ldsp-rh-switch-track{background:#3b82f6}
+    .ldsp-rh-switch input:checked + .ldsp-rh-switch-track::after{transform:translateX(14px)}
+    .ldsp-rh-num-label{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt-sec)}
+    .ldsp-rh-fatigue input[type=number]{width:50px;padding:4px 6px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--txt);font-size:11px;text-align:center}
+    .ldsp-rh-fatigue input[type=number]:focus{outline:none;border-color:#3b82f6}
+    .ldsp-rh-hint{font-size:10px;color:#7a818f;margin-top:8px;line-height:1.5}
+    /* 已读标记 */
+    .ldsp-read-marked{opacity:.6!important}
+    .ldsp-read-marked a.raw-topic-link,.ldsp-read-marked a.title.raw-link,.ldsp-read-marked a.title{position:relative}
+    .ldsp-read-marked a.raw-topic-link::after,.ldsp-read-marked a.title.raw-link::after,.ldsp-read-marked a.title::after{content:'已读';font-size:9px;font-weight:600;color:#34d399;background:rgba(52,199,89,.14);border:1px solid rgba(52,199,89,.3);border-radius:4px;padding:1px 4px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+    /* 继续阅读 */
+    .ldsp-continue-read{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:2147483580;display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;background:linear-gradient(135deg,#1d4ed8,#0f766e);color:#fff;font-size:12px;font-weight:700;text-decoration:none;box-shadow:0 8px 24px -6px rgba(29,78,216,.55);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;max-width:60vw;transition:transform .18s,box-shadow .18s;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+    .ldsp-continue-read:hover{transform:translateX(-50%) translateY(-1px);box-shadow:0 12px 28px -6px rgba(29,78,216,.7)}
+    .ldsp-cr-icon{font-size:14px}
+    .ldsp-cr-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    @media (prefers-color-scheme:light){
+        .ldsp-rh-hero{background:linear-gradient(135deg,rgba(47,107,255,.1),rgba(46,196,108,.08))}
+        .ldsp-rh-hint{color:#5a6270}
+        .ldsp-rh-fatigue input[type=number]{background:rgba(20,25,40,.05);color:#1a1d24}
+    }
+    /* ===== 折叠态：沙漏计时器（替换原 logo） ===== */
+    #ldsp-panel.collapsed{width:104px!important;height:40px!important;min-width:104px!important;min-height:40px!important;max-height:40px!important;border-radius:20px!important;padding:0!important;background:linear-gradient(135deg,#1e40af,#2563eb)!important;box-shadow:0 8px 20px -4px rgba(30,64,175,.6),0 0 0 1px rgba(255,255,255,.1) inset!important}
+    #ldsp-panel.light.collapsed{background:linear-gradient(135deg,#1d4ed8,#2563eb)!important}
+    #ldsp-panel.collapsed .ldsp-hdr{padding:0!important;min-height:0!important;gap:0!important}
+    #ldsp-panel.collapsed .ldsp-toggle{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;flex-direction:row!important;gap:6px;padding:0 12px;box-sizing:border-box;justify-content:center}
+    #ldsp-panel.collapsed .ldsp-toggle-logo{display:none!important}
+    #ldsp-panel.collapsed .ldsp-toggle-hourglass{display:flex!important;align-items:center;gap:6px;color:#fff;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.3px;white-space:nowrap;pointer-events:none;overflow:hidden;text-shadow:0 1px 3px rgba(0,0,0,.45)}
+    #ldsp-panel:not(.collapsed) .ldsp-toggle-hourglass{display:none}
+    #ldsp-panel.collapsed .ldsp-hg-svg{display:block;flex-shrink:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))}
+    #ldsp-panel.collapsed .ldsp-hg-time{min-width:0;text-align:center;overflow:hidden;text-overflow:ellipsis}
+    #ldsp-panel.collapsed .ldsp-toggle-hourglass.active .ldsp-hg-svg{animation:ldsp-hg-pulse 1.8s ease-in-out infinite}
+    #ldsp-panel.collapsed .ldsp-toggle-hourglass.active .ldsp-hg-stream{animation:ldsp-hg-stream 1s linear infinite}
+    #ldsp-panel.collapsed .ldsp-toggle-hourglass.goal-flip .ldsp-hg-svg{animation:ldsp-hg-flip 1.2s ease}
+    @media (hover:hover){#ldsp-panel.collapsed:hover .ldsp-toggle-hourglass .ldsp-hg-svg{transform:scale(1.08);transition:transform .2s var(--ease)}}
+    #ldsp-panel.collapsed:active .ldsp-toggle-hourglass .ldsp-hg-svg{transform:scale(.94)}
+    @keyframes ldsp-hg-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+    @keyframes ldsp-hg-stream{0%,100%{opacity:.15}50%{opacity:1}}
+    @keyframes ldsp-hg-flip{0%{transform:rotate(0)}50%{transform:rotate(180deg) scale(1.15)}100%{transform:rotate(360deg)}}
+    @media (max-width:380px){#ldsp-panel.collapsed{width:96px!important;min-width:96px!important;height:38px!important;min-height:38px!important;max-height:38px!important}}
+    @media (max-width:320px){#ldsp-panel.collapsed{width:88px!important;min-width:88px!important;height:34px!important;min-height:34px!important;max-height:34px!important}.ldsp-toggle-hourglass{font-size:11px!important;gap:4px!important}}
+                `;
+                document.head.appendChild(s);
+            }
+
+            // 把阅读仪表盘渲染进面板「阅读」tab 容器（仅构建结构 + 绑定事件）
+            renderDashboardInto(container) {
+                if (!container) return;
+                this._panelDash = container;
+                container.innerHTML = this._buildDashboardHTML();
+                this._bindDashboardEvents(container);
+                this._updateDashboardLive();
+            }
+
+            _buildDashboardHTML() {
+                const af = ReadHistoryStore.getAntiFatigue();
+                return `
+                    <div class="ldsp-rh-hero">
+                        <svg class="ldsp-rh-ring" width="76" height="76" viewBox="0 0 76 76">
+                            <circle class="ldsp-rh-ring-bg" cx="38" cy="38" r="30"/>
+                            <circle class="ldsp-rh-ring-fg ldsp-rh-d-ring" cx="38" cy="38" r="30"/>
+                            <text class="ldsp-rh-ring-txt ldsp-rh-d-goalpct" x="38" y="37" text-anchor="middle">—</text>
+                            <text class="ldsp-rh-ring-sub" x="38" y="50" text-anchor="middle">目标</text>
+                        </svg>
+                        <div class="ldsp-rh-hero-info">
+                            <div class="ldsp-rh-hero-label">⏳ 今日阅读</div>
+                            <div class="ldsp-rh-hero-time ldsp-rh-d-today">—</div>
+                            <div class="ldsp-rh-hero-sub">目标 <span class="ldsp-rh-d-goal">—</span></div>
+                            <div class="ldsp-rh-goal-bar"><i class="ldsp-rh-d-goalbar" style="width:0"></i></div>
+                        </div>
+                    </div>
+                    <div class="ldsp-rh-chips">
+                        <div class="ldsp-rh-chip"><span class="ldsp-rh-chip-l">累计</span><span class="ldsp-rh-chip-v ldsp-rh-d-total">—</span></div>
+                        <div class="ldsp-rh-chip"><span class="ldsp-rh-chip-l">已读帖</span><span class="ldsp-rh-chip-v ldsp-rh-d-posts">0</span></div>
+                        <div class="ldsp-rh-chip"><span class="ldsp-rh-chip-l">等级</span><span class="ldsp-rh-chip-v ldsp-rh-d-level">—</span></div>
+                        <div class="ldsp-rh-chip"><span class="ldsp-rh-chip-l">本次</span><span class="ldsp-rh-chip-v ldsp-rh-d-session">—</span></div>
+                    </div>
+                    <div class="ldsp-rh-card">
+                        <div class="ldsp-rh-card-hd"><span class="ldsp-rh-card-ic">⚡</span>阅读速度</div>
+                        <div class="ldsp-rh-card-bd ldsp-rh-d-speed">阅读数据积累中…</div>
+                    </div>
+                    <div class="ldsp-rh-card">
+                        <div class="ldsp-rh-card-hd"><span class="ldsp-rh-card-ic">🍵</span>防沉迷提醒</div>
+                        <div class="ldsp-rh-fatigue">
+                            <label class="ldsp-rh-switch"><input type="checkbox" class="ldsp-rh-af-enabled" ${af.enabled ? 'checked' : ''}><span class="ldsp-rh-switch-track"></span><span class="ldsp-rh-switch-txt">启用</span></label>
+                            <label class="ldsp-rh-num-label">连续 <input type="number" class="ldsp-rh-af-min" min="5" max="240" value="${af.minutes}"> 分钟提醒休息</label>
+                        </div>
+                    </div>
+                    <div class="ldsp-rh-hint">💡 折叠面板显示今日阅读沙漏；失焦/切后台暂停计时。目标在「设置 → 🎯 阅读目标」调整。</div>
+                `;
+            }
+
+            _bindDashboardEvents(d) {
+                const afEn = d.querySelector('.ldsp-rh-af-enabled');
+                const afMin = d.querySelector('.ldsp-rh-af-min');
+                const saveAf = () => {
+                    const cfg = ReadHistoryStore.getAntiFatigue();
+                    cfg.enabled = !!afEn.checked;
+                    cfg.minutes = Math.max(5, Math.min(240, parseInt(afMin.value, 10) || 45));
+                    afMin.value = cfg.minutes;
+                    ReadHistoryStore.setAntiFatigue(cfg);
+                };
+                afEn?.addEventListener('change', saveAf);
+                afMin?.addEventListener('change', saveAf);
+            }
+
+            _updateDashboardLive() {
+                const d = this._panelDash;
+                if (!d) return;
+                const today = this.todayMinutes();
+                const total = this.totalMinutes();
+                const goal = this.goalMinutes;
+                const posts = this._readPosts();
+                const pct = goal > 0 ? Math.min(1, today / goal) : 0;
+                const R = 30, C = 2 * Math.PI * R;
+                const ring = d.querySelector('.ldsp-rh-d-ring');
+                if (ring) {
+                    ring.setAttribute('stroke-dasharray', String(C));
+                    ring.setAttribute('stroke-dashoffset', String(C * (1 - pct)));
+                    ring.setAttribute('stroke', pct >= 1 ? '#34d399' : '#60a5fa');
+                }
+                const setT = (sel, txt) => { const el = d.querySelector(sel); if (el) el.textContent = txt; };
+                setT('.ldsp-rh-d-today', Utils.formatReadingTime(today));
+                setT('.ldsp-rh-d-total', Utils.formatReadingTime(total));
+                setT('.ldsp-rh-d-session', this._fmtSession(this._sessionSec));
+                setT('.ldsp-rh-d-posts', String(posts || 0));
+                setT('.ldsp-rh-d-goal', Utils.formatReadingTime(goal));
+                setT('.ldsp-rh-d-goalpct', `${Math.round(pct * 100)}%`);
+                const bar = d.querySelector('.ldsp-rh-d-goalbar');
+                if (bar) bar.style.width = `${Math.round(pct * 100)}%`;
+                const lvlEl = d.querySelector('.ldsp-rh-d-level');
+                if (lvlEl) {
+                    const lvl = Utils.getReadingLevel ? Utils.getReadingLevel(total) : null;
+                    if (lvl) {
+                        lvlEl.innerHTML = `${lvl.icon}`;
+                        lvlEl.style.color = lvl.color;
+                    } else {
+                        lvlEl.textContent = '—';
+                        lvlEl.style.color = '';
+                    }
+                }
+                const speed = d.querySelector('.ldsp-rh-d-speed');
+                if (speed) {
+                    if (posts > 0 && total > 0) {
+                        const secPerPost = (total * 60) / posts;
+                        const perH = posts / (total / 60);
+                        speed.innerHTML = `平均每篇 <b>${secPerPost < 60 ? Math.round(secPerPost) + ' 秒' : (secPerPost / 60).toFixed(1) + ' 分'}</b><span class="ldsp-rh-speed-sep">·</span>约 <b>${perH.toFixed(1)}</b> 帖/小时`;
+                    } else {
+                        speed.textContent = '阅读数据积累中…';
+                    }
+                }
+            }
+        }
+
+        // 话题列表增强：已读帖子标记 + 继续阅读（断点续读）
+        class TopicListEnhancer {
+            constructor() {
+                this._continueBtn = null;
+                this._obs = null;
+                this._saveTimer = null;
+                this._routeTimer = null;
+                this._lastPath = '';
+            }
+
+            init() {
+                this._dispatch();
+                // Discourse 是 SPA，轮询路由变化（document-start 注入，避免遗漏）
+                this._lastPath = location.pathname;
+                this._routeTimer = setInterval(() => {
+                    if (location.pathname !== this._lastPath) {
+                        this._lastPath = location.pathname;
+                        this._cleanup();
+                        this._dispatch();
+                    }
+                }, 800);
+            }
+
+            _cleanup() {
+                this._continueBtn = null;
+                document.querySelectorAll('.ldsp-continue-read').forEach(e => e.remove());
+                if (this._obs) { try { this._obs.disconnect(); } catch (e) {} this._obs = null; }
+            }
+
+            _isTopicPage() { return /^\/t\//.test(location.pathname); }
+            _isListPage() {
+                const p = location.pathname;
+                return p === '/' || /^\/(latest|top|new|unread|hot|categories|c)\b/.test(p) || /^\/c\//.test(p);
+            }
+            _topicIdFromUrl(url) {
+                const m = (url || '').match(/\/t\/[^/]+\/(\d+)/) || (url || '').match(/\/t\/[^?#]*?(\d+)(?:[/?#]|$)/);
+                return m ? m[1] : null;
+            }
+
+            _dispatch() {
+                if (this._isTopicPage()) this._onTopicPage();
+                else if (this._isListPage()) this._onListPage();
+            }
+
+            _onTopicPage() {
+                const tid = this._topicIdFromUrl(location.pathname);
+                if (tid) ReadHistoryStore.markVisited(tid);
+                const save = () => {
+                    const title = document.querySelector('.fancy-title, .topic-title')?.textContent?.trim() || document.title || '';
+                    ReadHistoryStore.setLastTopic({
+                        url: location.origin + location.pathname,
+                        title, topicId: tid,
+                        scrollY: Math.round(window.scrollY || 0),
+                        ts: Date.now()
+                    });
+                };
+                window.addEventListener('scroll', () => {
+                    if (this._saveTimer) return;
+                    this._saveTimer = setTimeout(() => { this._saveTimer = null; save(); }, 1500);
+                }, { passive: true });
+                window.addEventListener('pagehide', save);
+                // 恢复滚动位置（从「接着读」按钮进入）
+                const restore = sessionStorage.getItem('ldsp_restore_scroll');
+                if (restore) {
+                    sessionStorage.removeItem('ldsp_restore_scroll');
+                    setTimeout(() => { try { window.scrollTo(0, Number(restore) || 0); } catch (e) {} }, 700);
+                }
+            }
+
+            _onListPage() {
+                this._markReadTopics();
+                this._injectContinueButton();
+                if (window.MutationObserver) {
+                    this._obs = new MutationObserver(Utils.debounce(() => this._markReadTopics(), 300));
+                    this._obs.observe(document.body, { childList: true, subtree: true });
+                }
+            }
+
+            _markReadTopics() {
+                const visited = ReadHistoryStore.getVisited();
+                if (!visited.size) return;
+                const links = document.querySelectorAll(
+                    'a.raw-topic-link, a.title.raw-link, .topic-list-item a.title, .latest-topic-list-item a.title, a.search-link'
+                );
+                links.forEach(a => {
+                    const href = a.getAttribute('href') || '';
+                    const id = this._topicIdFromUrl(href);
+                    if (!id || !visited.has(id)) return;
+                    const row = a.closest('tr.topic-list-item, .topic-list-item, li.latest-topic-list-item') || a;
+                    row.classList.add('ldsp-read-marked');
+                });
+            }
+
+            _injectContinueButton() {
+                if (this._continueBtn) return;
+                const last = ReadHistoryStore.getLastTopic();
+                if (!last || !last.url) return;
+                if (Date.now() - (last.ts || 0) > 7 * 86400000) return; // 仅 7 天内显示
+                const btn = document.createElement('a');
+                btn.className = 'ldsp-continue-read';
+                btn.href = last.url;
+                btn.title = '恢复到上次离开时的大致位置';
+                btn.innerHTML = `<span class="ldsp-cr-icon">↩</span><span class="ldsp-cr-text">接着读：${Utils.escapeHtml(last.title || '上次的话题')}</span>`;
+                btn.addEventListener('click', () => {
+                    sessionStorage.setItem('ldsp_restore_scroll', String(last.scrollY || 0));
+                });
+                document.body.appendChild(btn);
+                this._continueBtn = btn;
+            }
+        }
+
+        // ==================== 启动 ====================
         async function startup() {
             // 初始化全局领导者管理器（必须在其他组件之前）
             TabLeader.init();
@@ -17948,7 +18516,7 @@ a:hover{text-decoration:underline;}
             
             // 创建面板
             try {
-                new Panel();
+                activePanel = new Panel();
             } catch (e) {
                 Logger.error('Panel initialization failed:', e);
             }
@@ -17959,6 +18527,22 @@ a:hover{text-decoration:underline;}
                 autoReader.init();
             } catch (e) {
                 Logger.error('AutoReader initialization failed:', e);
+            }
+
+            // 阅读沙漏 HUD（会话计时 / 目标环 / 热力图 / 速度 / 防沉迷）
+            try {
+                readingHUD = new ReadingHUD();
+                readingHUD.init();
+            } catch (e) {
+                Logger.error('ReadingHUD initialization failed:', e);
+            }
+
+            // 话题列表增强（已读标记 / 继续阅读断点续读）
+            try {
+                topicEnhancer = new TopicListEnhancer();
+                topicEnhancer.init();
+            } catch (e) {
+                Logger.error('TopicListEnhancer initialization failed:', e);
             }
 
             // 帖子悬浮预览（鼠标悬停标题 1s 后弹窗展示帖子信息）
