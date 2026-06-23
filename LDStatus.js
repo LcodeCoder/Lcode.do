@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         LcodeDO
 // @namespace    http://tampermonkey.net/
-// @version      0.0.4
-// @description  在 Linux.do 和 IDCFlare 页面显示信任级别进度，支持历史趋势、里程碑通知、阅读时间统计、排行榜系统、我的活动查看、自动阅读（自上而下自动浏览文章，可设置每篇停留时长）。两站点均支持排行榜和云同步功能
+// @version      0.0.5
+// @description  在 Linux.do 和 IDCFlare 页面显示信任级别进度，支持历史趋势、里程碑通知、阅读时间统计、排行榜系统、我的活动查看、自动阅读（自上而下自动浏览文章，可设置每篇停留时长）、帖子标题悬浮预览（悬停 1s 弹窗展示帖子信息）。两站点均支持排行榜和云同步功能
 // @author       JackLiii
 // @license      MIT
 // @match        https://linux.do/*
@@ -17458,6 +17458,421 @@ a:hover{text-decoration:underline;}
             }
         }
 
+        // ==================== 帖子悬浮预览（鼠标悬停在标题上 1s 后弹窗展示帖子信息） ====================
+        class TopicPreview {
+            static HOVER_DELAY = 10;           // 悬浮触发延时（毫秒）
+            static CACHE_TTL = 5 * 60 * 1000;   // 缓存有效期
+            static MAX_EXCERPT = 2000;           // 摘要最大字符数
+            // 匹配 Discourse 话题标题链接：话题列表 / 搜索 / 通知 / 话题页标题等
+            static LINK_SELECTOR = [
+                'a.raw-topic-link',
+                'a.title.raw-link',
+                '.topic-list-item a.title',
+                'a.search-link',
+                'a.fancy-title',
+                '.latest-topic-list-item a.title',
+                '.category-list-item a.title',
+                'a.badge-wrapper[href*="/t/"]',
+                'a[data-topic-id]'
+            ].join(',');
+
+            constructor() {
+                this._cache = new Map();        // topicId -> { info, ts }
+                this._timer = null;
+                this._currentLink = null;
+                this._mouse = { x: 0, y: 0 };
+                this._root = null;
+                this._reqId = 0;                // 用于丢弃过期请求
+                this._styleInjected = false;
+            }
+
+            init() {
+                try {
+                    this._injectStyle();
+                    const doc = document;
+                    doc.addEventListener('mouseover', this._onOver, { passive: true });
+                    doc.addEventListener('mouseout', this._onOut, { passive: true });
+                    doc.addEventListener('mousemove', this._onMove, { passive: true });
+                    // 滚动 / 点击任意位置 / 路由切换时隐藏
+                    doc.addEventListener('scroll', this._onScroll, { passive: true, capture: true });
+                    window.addEventListener('popstate', () => this._hide());
+                } catch (e) {
+                    Logger.error('[TopicPreview] init failed:', e);
+                }
+            }
+
+            _injectStyle() {
+                if (this._styleInjected) return;
+                this._styleInjected = true;
+                const css = `
+.ldsp-tp-card{position:fixed;z-index:2147483646;max-width:760px;min-width:520px;background:#1c1c1e;color:#f2f2f7;border:1px solid rgba(84,84,88,.45);border-radius:18px;box-shadow:0 18px 54px rgba(0,0,0,.55);padding:20px 22px 16px;font-family:-apple-system,'SF Pro Display','PingFang SC','Noto Sans SC',sans-serif;font-size:14px;line-height:1.6;opacity:0;transform:translateY(6px) scale(.98);transition:opacity .16s var(--ldsp-ease,cubic-bezier(.22,1,.36,1)),transform .16s var(--ldsp-ease,cubic-bezier(.22,1,.36,1));pointer-events:none;will-change:opacity,transform;box-sizing:border-box;max-height:min(82vh,720px);overflow:hidden;display:flex;flex-direction:column}
+.ldsp-tp-card.show{opacity:1;transform:translateY(0) scale(1)}
+.ldsp-tp-card.ldsp-tp-loading{min-width:380px;padding:24px 28px}
+.ldsp-tp-title{font-size:19px;font-weight:700;color:#fff;line-height:1.4;margin:0 0 12px;word-break:break-word;letter-spacing:-.01em}
+.ldsp-tp-catrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:12px}
+.ldsp-tp-cat{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#fff;padding:3px 9px;border-radius:11px;background:rgba(0,122,255,.85)}
+.ldsp-tp-tag{font-size:11px;color:#c7c7cc;background:rgba(255,255,255,.08);padding:3px 8px;border-radius:8px;border:1px solid rgba(255,255,255,.1)}
+.ldsp-tp-author{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08)}
+.ldsp-tp-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#333}
+.ldsp-tp-author-name{font-size:13px;color:#aeaeb2;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ldsp-tp-author-name b{color:#e5e5ea;font-weight:600}
+.ldsp-tp-excerpt{font-size:13.5px;color:#c7c7cc;margin:0 0 14px;word-break:break-word;overflow-y:auto;max-height:520px;line-height:1.65;padding-right:6px}
+.ldsp-tp-excerpt::-webkit-scrollbar{width:6px}
+.ldsp-tp-excerpt::-webkit-scrollbar-thumb{background:rgba(142,142,147,.4);border-radius:3px}
+/* 富文本（首楼 cooked）渲染 */
+.ldsp-tp-excerpt p{margin:8px 0}
+.ldsp-tp-excerpt img{max-width:100%;height:auto;border-radius:10px;margin:6px 0;display:block;background:#2c2c2e}
+.ldsp-tp-excerpt a{color:#0a84ff;text-decoration:none}
+.ldsp-tp-excerpt a:hover{text-decoration:underline}
+.ldsp-tp-excerpt h1,.ldsp-tp-excerpt h2,.ldsp-tp-excerpt h3,.ldsp-tp-excerpt h4{color:#fff;font-size:15px;font-weight:700;margin:12px 0 6px;line-height:1.4}
+.ldsp-tp-excerpt ul,.ldsp-tp-excerpt ol{margin:8px 0;padding-left:22px}
+.ldsp-tp-excerpt li{margin:3px 0}
+.ldsp-tp-excerpt blockquote{margin:8px 0;padding:8px 12px;background:rgba(255,255,255,.05);border-left:3px solid rgba(0,122,255,.6);border-radius:0 8px 8px 0;color:#aeaeb2}
+.ldsp-tp-excerpt pre{background:#000;border:1px solid rgba(255,255,255,.08);padding:10px;border-radius:8px;overflow-x:auto;margin:8px 0;font-size:12px}
+.ldsp-tp-excerpt code{background:rgba(255,255,255,.08);padding:2px 5px;border-radius:4px;font-family:ui-monospace,'SF Mono',monospace;font-size:12px}
+.ldsp-tp-excerpt pre code{background:none;padding:0}
+.ldsp-tp-excerpt table{border-collapse:collapse;width:100%;margin:8px 0;font-size:12px}
+.ldsp-tp-excerpt th,.ldsp-tp-excerpt td{border:1px solid rgba(255,255,255,.12);padding:6px 8px;text-align:left}
+.ldsp-tp-excerpt th{background:rgba(255,255,255,.05);font-weight:600;color:#fff}
+.ldsp-tp-excerpt .lightbox-wrapper .lightbox{display:inline-block}
+.ldsp-tp-stats{display:flex;flex-wrap:wrap;gap:10px 18px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:#8e8e93;margin-top:auto}
+.ldsp-tp-stat{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.ldsp-tp-stat b{color:#e5e5ea;font-weight:600;font-variant-numeric:tabular-nums}
+.ldsp-tp-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.25);border-top-color:#0a84ff;border-radius:50%;animation:ldsp-tp-spin .7s linear infinite;vertical-align:-2px;margin-right:8px}
+@keyframes ldsp-tp-spin{to{transform:rotate(360deg)}}
+@media (prefers-color-scheme:light){
+.ldsp-tp-card{background:#fff;color:#1c1c1e;border-color:rgba(60,60,67,.14);box-shadow:0 18px 50px rgba(0,0,0,.2)}
+.ldsp-tp-title{color:#1c1c1e}
+.ldsp-tp-cat{background:rgba(0,122,255,.12);color:#0a84ff}
+.ldsp-tp-tag{color:#3c3c43;background:#f2f2f7;border-color:rgba(60,60,67,.12)}
+.ldsp-tp-author{border-bottom-color:rgba(60,60,67,.1)}
+.ldsp-tp-author-name{color:#6e6e76}
+.ldsp-tp-author-name b{color:#1c1c1e}
+.ldsp-tp-excerpt{color:#3c3c43}
+.ldsp-tp-excerpt::-webkit-scrollbar-thumb{background:rgba(60,60,67,.2)}
+.ldsp-tp-excerpt img{background:#f2f2f7}
+.ldsp-tp-excerpt h1,.ldsp-tp-excerpt h2,.ldsp-tp-excerpt h3,.ldsp-tp-excerpt h4{color:#1c1c1e}
+.ldsp-tp-excerpt blockquote{background:rgba(60,60,67,.05);color:#6e6e76;border-left-color:rgba(0,122,255,.5)}
+.ldsp-tp-excerpt pre{background:#1c1c1e;color:#f2f2f7;border-color:rgba(0,0,0,.1)}
+.ldsp-tp-excerpt code{background:rgba(60,60,67,.1)}
+.ldsp-tp-excerpt th{background:rgba(60,60,67,.05);color:#1c1c1e}
+.ldsp-tp-stats{border-top-color:rgba(60,60,67,.1);color:#8e8e93}
+.ldsp-tp-stats b{color:#1c1c1e}
+.ldsp-tp-avatar{background:#eee}
+}`;
+                const style = document.createElement('style');
+                style.id = 'ldsp-topic-preview-style';
+                style.textContent = css;
+                (document.head || document.documentElement).appendChild(style);
+            }
+
+            // 从 href 中提取 topicId
+            _extractTopicId(href) {
+                if (!href) return null;
+                const m = href.match(/\/t(?:opic)?\/[^\/]+\/(\d+)/) || href.match(/\/t(?:opic)?\/(\d+)/);
+                return m ? m[1] : null;
+            }
+
+            // 找到事件目标对应的话题标题链接
+            _resolveLink(target) {
+                if (!target || target.nodeType !== 1) return null;
+                const a = target.closest('a');
+                if (!a) return null;
+                const tid = a.getAttribute('data-topic-id') || this._extractTopicId(a.getAttribute('href'));
+                if (!tid) return null;
+                // 只在「标题」类链接上触发，避免对正文里随便一个话题链接也弹窗
+                const cls = a.className || '';
+                const ok = a.matches(TopicPreview.LINK_SELECTOR) ||
+                          /topic|title|search-link|fancy/i.test(cls) ||
+                          a.hasAttribute('data-topic-id');
+                return ok ? { link: a, topicId: tid } : null;
+            }
+
+            _onOver = (e) => {
+                const res = this._resolveLink(e.target);
+                if (!res) {
+                    if (this._currentLink) this._resetHover();
+                    return;
+                }
+                // 同一链接上移动不重置计时器
+                if (this._currentLink === res.link) return;
+                this._resetHover();
+                this._currentLink = res.link;
+                this._mouse = { x: e.clientX, y: e.clientY };
+                this._timer = setTimeout(() => this._show(res.topicId), TopicPreview.HOVER_DELAY);
+            };
+
+            _onOut = (e) => {
+                if (!this._currentLink) return;
+                // 离开链接（包括其子元素）才隐藏
+                const related = e.relatedTarget;
+                if (!related || !this._currentLink.contains(related)) {
+                    this._resetHover();
+                    this._hide();
+                }
+            };
+
+            _onMove = (e) => {
+                this._mouse = { x: e.clientX, y: e.clientY };
+            };
+
+            _onScroll = () => {
+                if (this._root && this._root.classList.contains('show')) this._hide();
+            };
+
+            _resetHover() {
+                if (this._timer) { clearTimeout(this._timer); this._timer = null; }
+                this._currentLink = null;
+            }
+
+            _ensureRoot() {
+                if (this._root) return this._root;
+                this._root = document.createElement('div');
+                this._root.className = 'ldsp-tp-card';
+                document.body.appendChild(this._root);
+                return this._root;
+            }
+
+            async _show(topicId) {
+                const root = this._ensureRoot();
+                const myReq = ++this._reqId;
+
+                // 命中缓存直接渲染
+                const cached = this._getCached(topicId);
+                if (cached) {
+                    this._render(cached, true);
+                    return;
+                }
+
+                // 显示加载态并定位
+                root.className = 'ldsp-tp-card ldsp-tp-loading';
+                root.innerHTML = `<span class="ldsp-tp-spinner"></span>正在加载帖子信息…`;
+                this._position();
+
+                const info = await this._fetchTopic(topicId);
+                if (myReq !== this._reqId) return; // 已被更新的请求取代
+                if (!info) {
+                    root.innerHTML = `<div style="font-size:12px;color:#8e8e93">加载失败，请稍后重试</div>`;
+                    this._position();
+                    return;
+                }
+                this._render(info, true);
+            }
+
+            _render(info, show) {
+                const root = this._ensureRoot();
+                root.className = 'ldsp-tp-card';
+                root.innerHTML = this._buildHtml(info);
+                if (show) {
+                    this._position();
+                    requestAnimationFrame(() => {
+                        root.classList.add('show');
+                    });
+                }
+            }
+
+            _buildHtml(info) {
+                const esc = Utils.escapeHtml;
+                const tags = Array.isArray(info.tags) ? info.tags : [];
+                const tagHtml = tags.length
+                    ? `<div class="ldsp-tp-catrow">${info.category ? `<span class="ldsp-tp-cat">${esc(info.category)}</span>` : ''}${tags.map(t => `<span class="ldsp-tp-tag">🏷️ ${esc(t)}</span>`).join('')}</div>`
+                    : (info.category ? `<div class="ldsp-tp-catrow"><span class="ldsp-tp-cat">📁 ${esc(info.category)}</span></div>` : '');
+
+                const author = info.author;
+                const authorHtml = author ? `
+                    <div class="ldsp-tp-author">
+                        ${author.avatar ? `<img class="ldsp-tp-avatar" src="${esc(author.avatar)}" alt="" onerror="this.style.visibility='hidden'">` : `<span class="ldsp-tp-avatar"></span>`}
+                        <span class="ldsp-tp-author-name"><b>${esc(author.name || author.username)}</b> · 作者</span>
+                    </div>` : '';
+
+                const excerptHtml = info.excerptHtml
+                    ? `<div class="ldsp-tp-excerpt">${info.excerptHtml}</div>`
+                    : (info.excerpt ? `<div class="ldsp-tp-excerpt">${esc(info.excerpt)}</div>` : '');
+
+                const stats = [];
+                if (info.replyCount != null) stats.push(`<span class="ldsp-tp-stat">💬 回复 <b>${info.replyCount}</b></span>`);
+                if (info.postsCount != null) stats.push(`<span class="ldsp-tp-stat">📝 楼层 <b>${info.postsCount}</b></span>`);
+                if (info.views != null) stats.push(`<span class="ldsp-tp-stat">👁️ 浏览 <b>${Number(info.views).toLocaleString()}</b></span>`);
+                if (info.likeCount != null && info.likeCount > 0) stats.push(`<span class="ldsp-tp-stat">❤️ 赞 <b>${info.likeCount}</b></span>`);
+                if (info.createdAt) stats.push(`<span class="ldsp-tp-stat">📅 ${Utils.formatRelativeTime(info.createdAt)}</span>`);
+                if (info.lastPostedAt) stats.push(`<span class="ldsp-tp-stat">⏱️ ${Utils.formatRelativeTime(info.lastPostedAt)}</span>`);
+                const statsHtml = stats.length ? `<div class="ldsp-tp-stats">${stats.join('')}</div>` : '';
+
+                return `<div class="ldsp-tp-title">${esc(info.title)}</div>${tagHtml}${authorHtml}${excerptHtml}${statsHtml}`;
+            }
+
+            _position() {
+                const root = this._root;
+                if (!root) return;
+                const margin = 14;
+                // 先显示一次以测量尺寸
+                root.style.left = '-9999px';
+                root.style.top = '0';
+                root.style.visibility = 'hidden';
+                root.style.display = '';
+                // 强制布局
+                const rect = root.getBoundingClientRect();
+                const w = rect.width || 320;
+                const h = rect.height || 120;
+                root.style.visibility = '';
+
+                let x = this._mouse.x + margin;
+                let y = this._mouse.y + margin;
+                const vw = document.documentElement.clientWidth;
+                const vh = document.documentElement.clientHeight;
+                if (x + w > vw - 8) x = Math.max(8, this._mouse.x - margin - w);
+                if (y + h > vh - 8) y = Math.max(8, this._mouse.y - margin - h);
+                if (x < 8) x = 8;
+                if (y < 8) y = 8;
+                root.style.left = `${x}px`;
+                root.style.top = `${y}px`;
+            }
+
+            _hide() {
+                this._reqId++; // 让飞行中的请求作废
+                if (this._timer) { clearTimeout(this._timer); this._timer = null; }
+                this._currentLink = null;
+                if (this._root) {
+                    this._root.classList.remove('show');
+                    this._root.innerHTML = '';
+                }
+            }
+
+            _getCached(topicId) {
+                const e = this._cache.get(String(topicId));
+                if (!e) return null;
+                if (Date.now() - e.ts > TopicPreview.CACHE_TTL) { this._cache.delete(String(topicId)); return null; }
+                return e.info;
+            }
+            _setCache(topicId, info) {
+                this._cache.set(String(topicId), { info, ts: Date.now() });
+            }
+
+            async _fetchTopic(topicId) {
+                try {
+                    const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+                    const res = await fetch(`${location.origin}/t/${topicId}.json`, {
+                        headers: {
+                            'x-csrf-token': csrf || '',
+                            'x-requested-with': 'XMLHttpRequest',
+                            'accept': 'application/json'
+                        },
+                        credentials: 'include'
+                    });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const d = await res.json();
+
+                    // 摘要：取首楼 cooked（富文本，含图片）
+                    let excerptHtml = '';
+                    let excerptText = '';
+                    try {
+                        const cooked = d.post_stream?.posts?.[0]?.cooked || d.excerpt || '';
+                        if (cooked) {
+                            excerptHtml = this._cleanCooked(cooked);
+                            excerptText = this._htmlToText(cooked);
+                        }
+                    } catch {}
+
+                    // 作者信息
+                    let author = null;
+                    const cb = d.details?.created_by || d.created_by;
+                    if (cb) {
+                        author = {
+                            username: cb.username || '',
+                            name: cb.name || '',
+                            avatar: cb.avatar_template
+                                ? cb.avatar_template.replace('{size}', '96').replace('{size}', '96')
+                                          .replace(/^https?:/, location.protocol)
+                                : ''
+                        };
+                        if (author.avatar && !/^https?:\/\//.test(author.avatar)) {
+                            author.avatar = `${location.origin}${author.avatar}`;
+                        }
+                    }
+
+                    // 分类名：尝试从链接所在行的 DOM 读取，否则留空
+                    const category = this._lookupCategoryName(d.category_id);
+
+                    const info = {
+                        id: topicId,
+                        title: d.title || d.fancy_title || '未知标题',
+                        category,
+                        tags: Array.isArray(d.tags) ? d.tags : [],
+                        author,
+                        excerptHtml,
+                        excerpt: Utils.sanitize(excerptText, TopicPreview.MAX_EXCERPT),
+                        postsCount: d.posts_count ?? null,
+                        replyCount: d.reply_count != null ? d.reply_count : (d.posts_count ? Math.max(0, d.posts_count - 1) : null),
+                        views: d.views ?? null,
+                        likeCount: d.like_count ?? 0,
+                        createdAt: d.created_at || null,
+                        lastPostedAt: d.last_posted_at || d.bumped_at || null
+                    };
+                    this._setCache(topicId, info);
+                    return info;
+                } catch (e) {
+                    Logger.warn('[TopicPreview] fetch failed:', e?.message || e);
+                    return null;
+                }
+            }
+
+            _lookupCategoryName(categoryId) {
+                if (!categoryId) return '';
+                // 优先从当前悬停链接所在的话题行读取分类徽标文本
+                try {
+                    if (this._currentLink) {
+                        const row = this._currentLink.closest('tr, article, .topic-list-item, li');
+                        const badge = row?.querySelector('.badge-category .category-name, .badge-category__name, .category-name');
+                        if (badge && badge.textContent.trim()) return badge.textContent.trim();
+                    }
+                } catch {}
+                // 退而求其次：使用 Discourse 内置的 category 缓存
+                try {
+                    const cats = window.Discourse?.__container__?.lookup?.('site:main')?.categories || [];
+                    const found = cats.find(c => String(c.id) === String(categoryId));
+                    if (found?.name) return found.name;
+                } catch {}
+                return '';
+            }
+
+            _htmlToText(html) {
+                const tmp = document.createElement('div');
+                tmp.innerHTML = html;
+                // 去掉引用、代码块等噪音后再取文本
+                tmp.querySelectorAll('.quote, blockquote, .lightbox-wrapper, script, style').forEach(n => n.remove());
+                return (tmp.textContent || '').replace(/\s+/g, ' ').trim();
+            }
+
+            // 清理首楼 cooked：保留富文本与图片，移除脚本/样式/交互元素
+            _cleanCooked(html) {
+                const tmp = document.createElement('div');
+                tmp.innerHTML = html;
+                // 移除脚本、样式、表单、iframe 等危险/无用元素
+                tmp.querySelectorAll('script, style, iframe, object, embed, form, button, input, textarea, select, noscript').forEach(n => n.remove());
+                // 移除 Discourse 元数据/引用等噪音（保留图片与正文）
+                tmp.querySelectorAll('.lightbox-meta, .meta-data, .quote-controls, .quote-button, aside.onebox .onebox-meta, aside.quote .title').forEach(n => n.remove());
+                // 把 onebox 行内图片保留，去掉外链跳转图标
+                tmp.querySelectorAll('a.no-track-link, aside.onebox .favicon').forEach(n => n.remove());
+                // 图片懒加载：把 data-src/data-lazy-src 还原到 src，确保能显示
+                tmp.querySelectorAll('img').forEach(img => {
+                    const lazy = img.getAttribute('data-src') || img.getAttribute('data-lazy-src');
+                    if (lazy && !img.getAttribute('src')) img.setAttribute('src', lazy);
+                    // 去掉可能阻止加载的属性
+                    img.removeAttribute('loading');
+                    img.removeAttribute('data-lazy-src');
+                });
+                // 链接新开标签页
+                tmp.querySelectorAll('a[href]').forEach(a => {
+                    a.setAttribute('target', '_blank');
+                    a.setAttribute('rel', 'noopener noreferrer nofollow');
+                });
+                let out = tmp.innerHTML || '';
+                // 限制总体积，避免超长内容拖慢渲染
+                if (out.length > 60000) out = out.slice(0, 60000) + '…';
+                return out;
+            }
+        }
+
         // ==================== 启动 ====================
         async function startup() {
             // 初始化全局领导者管理器（必须在其他组件之前）
@@ -17481,6 +17896,14 @@ a:hover{text-decoration:underline;}
                 autoReader.init();
             } catch (e) {
                 Logger.error('AutoReader initialization failed:', e);
+            }
+
+            // 帖子悬浮预览（鼠标悬停标题 1s 后弹窗展示帖子信息）
+            try {
+                const topicPreview = new TopicPreview();
+                topicPreview.init();
+            } catch (e) {
+                Logger.error('TopicPreview initialization failed:', e);
             }
         }
 
