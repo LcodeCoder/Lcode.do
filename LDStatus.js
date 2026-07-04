@@ -79,7 +79,7 @@
                     const res = await fetch(url, {
                         method,
                         credentials: 'include',
-                        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                         body: data ? JSON.stringify(data) : undefined
                     });
                     let resData;
@@ -7765,6 +7765,13 @@ a:hover{text-decoration:underline;}
                 this._userPromise = null;
             }
 
+            _setLoading(scope, value) {
+                if (scope && Object.prototype.hasOwnProperty.call(this._loadingState, scope)) {
+                    this._loadingState[scope] = !!value;
+                }
+                this._loading = !!(this._loadingState.overview || this._loadingState.trans);
+            }
+
             init() { 
                 this._createOverlay();
                 this._initBridge();
@@ -7876,15 +7883,19 @@ a:hover{text-decoration:underline;}
             }
 
             async _fetchData() {
-                if (this._loading) return;
-                this._loading = true;
+                if (this._loadingState.overview) return;
+                this._setLoading('overview', true);
+                const currentTab = this._tab;
                 const body = this.overlay.querySelector('.ldsp-ldc-body');
                 const btn = this.overlay.querySelector('.ldsp-ldc-refresh');
                 btn?.classList.add('spinning');
-                body.innerHTML = `<div class="ldsp-ldc-loading"><div class="ldsp-spinner"></div><div>加载中...</div></div>`;
+                if (this._tab === 'overview') {
+                    body.innerHTML = `<div class="ldsp-ldc-loading"><div class="ldsp-spinner"></div><div>加载中...</div></div>`;
+                }
 
                 try {
                     const user = await this._request('https://credit.linux.do/api/v1/oauth/user-info');
+                    if (this._tab !== currentTab || currentTab !== 'overview') return;
                     if (!user || user._authError) {
                         this._showLoginGuide('auth');
                         return;
@@ -7892,6 +7903,8 @@ a:hover{text-decoration:underline;}
                     if (user._timeoutError) { this._showLoginGuide('timeout'); return; }
                     if (user._networkError) { this._showLoginGuide('network'); return; }
                     if (user._bridgeError) { this._showLoginGuide('timeout'); return; }
+                    if (user._forbiddenError) { this._showError(user._error || '权限不足，请在 LDC 官网确认登录状态或过盾后重试'); return; }
+                    if (user._error) { this._showError(user._error); return; }
 
                     this._userId = user.id || user.user_id || null;
                     this._ldcUsername = user.username || '';
@@ -7935,6 +7948,8 @@ a:hover{text-decoration:underline;}
                     }
 
                     const stats = await this._request('https://credit.linux.do/api/v1/dashboard/stats/daily?days=7');
+                    if (stats?._authError) { this._showLoginGuide('auth'); return; }
+                    if (stats?._forbiddenError || stats?._error) { this._showError(stats._error || '获取近7天收支失败'); return; }
                     if (stats && Array.isArray(stats)) {
                         data.dailyStats = stats.map(i => ({
                             date: i.date,
@@ -7943,12 +7958,13 @@ a:hover{text-decoration:underline;}
                             expense: parseFloat(i.expense) || 0
                         }));
                     }
+                    if (this._tab !== currentTab || currentTab !== 'overview') return;
                     this._renderOverview(data);
                     this._saveCache(data);
                 } catch {
-                    this._showError('网络错误，请稍后重试');
+                    if (this._tab === currentTab) this._showError('网络错误，请稍后重试');
                 } finally {
-                    this._loading = false;
+                    this._setLoading('overview', false);
                     btn?.classList.remove('spinning');
                 }
             }
@@ -7981,7 +7997,7 @@ a:hover{text-decoration:underline;}
             _showLoginGuide(reason = 'auth') {
                 const body = this.overlay.querySelector('.ldsp-ldc-body');
                 this.overlay.querySelector('.ldsp-ldc-refresh')?.classList.remove('spinning');
-                this._loading = false;
+                this._setLoading(this._tab === 'transactions' ? 'trans' : 'overview', false);
 
                 const isTimeout = reason === 'timeout';
                 const isNetwork = reason === 'network';
@@ -8046,10 +8062,14 @@ a:hover{text-decoration:underline;}
                             } else {
                                 resolve(respData);
                             }
-                        } else if (status === 401 || status === 403) {
-                            resolve({ _authError: true });
+                        } else if (status === 401) {
+                            resolve({ _authError: true, _status: status, _error: respData?.error_msg || respData?._error || '未登录' });
+                        } else if (status === 403) {
+                            resolve({ _forbiddenError: true, _status: status, _error: respData?.error_msg || respData?._error || '权限不足，请在 LDC 官网确认登录状态或过盾后重试' });
+                        } else if (status === 0) {
+                            resolve({ _bridgeError: true, _status: status, _error: respData?.error_msg || respData?._error || '网络错误' });
                         } else {
-                            resolve({ _bridgeError: true, _error: respData?._error || `请求失败 (${status})` });
+                            resolve({ _status: status, _error: respData?.error_msg || respData?._error || `请求失败 (${status})` });
                         }
                     });
 
@@ -8079,6 +8099,7 @@ a:hover{text-decoration:underline;}
                         headers: {
                             'Accept': 'application/json',
                             'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
                             'Referer': 'https://credit.linux.do/home'
                         },
                         data: data ? JSON.stringify(data) : undefined,
@@ -8090,7 +8111,15 @@ a:hover{text-decoration:underline;}
                                     return;
                                 } catch {}
                             }
-                            resolve(r.status === 401 || r.status === 403 ? { _authError: true } : null);
+                            let errMsg = '';
+                            try {
+                                const j = JSON.parse(r.responseText || '{}');
+                                errMsg = j?.error_msg || j?._error || '';
+                            } catch {}
+                            if (r.status === 401) resolve({ _authError: true, _status: r.status, _error: errMsg || '未登录' });
+                            else if (r.status === 403) resolve({ _forbiddenError: true, _status: r.status, _error: errMsg || '权限不足，请在 LDC 官网确认登录状态或过盾后重试' });
+                            else if (errMsg) resolve({ _status: r.status, _error: errMsg });
+                            else resolve(null);
                         },
                         onerror: () => resolve({ _networkError: true }),
                         ontimeout: () => resolve({ _timeoutError: true })
@@ -8213,8 +8242,8 @@ a:hover{text-decoration:underline;}
             }
 
             async _fetchTrans(refresh = false, more = false) {
-                if (this._loading) return;
-                this._loading = true;
+                if (this._loadingState.trans) return;
+                this._setLoading('trans', true);
                 const currentTab = this._tab;
                 const btn = this.overlay.querySelector('.ldsp-ldc-refresh');
                 const currentList = this.overlay.querySelector('.ldsp-ldc-trans-list');
@@ -8244,7 +8273,16 @@ a:hover{text-decoration:underline;}
                     const result = await this._request('https://credit.linux.do/api/v1/order/transactions', 'POST', payload);
                     if (this._tab !== currentTab) return;
                     if (result?._authError) {
+                        try { GM_setValue(LDCManager.CACHE_KEY, null); } catch {}
                         this._showError('请先登录 credit.linux.do', true);
+                        return;
+                    }
+                    if (result?._forbiddenError) {
+                        this._showError(result._error || '权限不足，请在 LDC 官网确认登录状态或过盾后重试');
+                        return;
+                    }
+                    if (result?._error) {
+                        this._showError(result._error);
                         return;
                     }
                     if (!result) {
@@ -8261,7 +8299,7 @@ a:hover{text-decoration:underline;}
                 } catch {
                     if (!more && this._tab === currentTab) this._showError('网络错误，请稍后重试');
                 } finally {
-                    this._loading = false;
+                    this._setLoading('trans', false);
                     btn?.classList.remove('spinning');
                 }
             }
@@ -8393,7 +8431,7 @@ a:hover{text-decoration:underline;}
                         this._ignoreNextTransScroll = false;
                         return;
                     }
-                    if (this._loading || !this._trans.hasMore) return;
+                    if (this._loadingState.trans || !this._trans.hasMore) return;
                     const distanceToBottom = list.scrollHeight - list.clientHeight - list.scrollTop;
                     if (distanceToBottom > 120) {
                         this._transLoadMoreArmed = true;
@@ -8462,7 +8500,7 @@ a:hover{text-decoration:underline;}
             _showError(msg, login = false) {
                 const body = this.overlay.querySelector('.ldsp-ldc-body');
                 this.overlay.querySelector('.ldsp-ldc-refresh')?.classList.remove('spinning');
-                this._loading = false;
+                this._setLoading(this._tab === 'transactions' ? 'trans' : 'overview', false);
                 const icon = msg.includes('超时') ? '⏱️' : msg.includes('网络') ? '🌐' : msg.includes('登录') ? '🔐' : '😕';
                 const isTrans = this._tab === 'transactions';
                 const filter = isTrans ? this._getFilterHtml() : '';
