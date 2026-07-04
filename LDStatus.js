@@ -6083,6 +6083,50 @@
         .ldsp-tab{min-height:26px;padding:5px 5px}
         .ldsp-section{padding:8px}
     }
+
+    .ldsp-tl3p{display:flex;flex-direction:column;gap:10px;color:var(--txt)}
+    .ldsp-tl3p-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-lg);padding:10px;box-shadow:none}
+    .ldsp-tl3p-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;overflow:hidden}
+    .ldsp-tl3p-title{display:flex;align-items:center;gap:7px;margin-bottom:4px;font-size:13px;font-weight:780;color:var(--txt)}
+    .ldsp-tl3p-badge{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;border-radius:999px;font-size:10px;font-weight:760;white-space:nowrap;background:var(--bg-el);border:1px solid var(--border);color:var(--txt-sec)}
+    .ldsp-tl3p-hero.ok .ldsp-tl3p-badge{background:var(--ok-bg);border-color:oklch(56% .15 142 / .26);color:var(--ok)}
+    .ldsp-tl3p-hero.warn .ldsp-tl3p-badge{background:var(--warn-bg);border-color:oklch(64% .16 75 / .28);color:var(--warn)}
+    .ldsp-tl3p-hero.danger .ldsp-tl3p-badge{background:var(--err-bg);border-color:oklch(60% .19 28 / .28);color:var(--err)}
+    .ldsp-tl3p-sub{font-size:11px;line-height:1.45;color:var(--txt-mut)}
+    .ldsp-tl3p-window{display:flex;align-items:center;gap:5px;margin-top:6px;font-size:10px;color:var(--txt-dim)}
+    .ldsp-tl3p-count{flex:0 0 auto;min-width:54px;text-align:right;font-size:12px;font-weight:760;color:var(--txt-sec)}
+    .ldsp-tl3p-count b{font-size:18px;color:var(--txt)}
+    .ldsp-tl3p-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+    .ldsp-tl3p-stat{background:var(--bg-el);border:1px solid var(--border);border-radius:var(--r-md);padding:8px 7px;min-width:0}
+    .ldsp-tl3p-stat-val{font-size:14px;font-weight:760;color:var(--txt);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ldsp-tl3p-stat-lbl{margin-top:3px;font-size:9px;color:var(--txt-mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ldsp-tl3p-advice{display:flex;gap:8px;align-items:flex-start;font-size:11px;line-height:1.5;color:var(--txt-sec)}
+    .ldsp-tl3p-advice-icon{flex:0 0 auto;width:22px;height:22px;border-radius:7px;display:grid;place-items:center;background:var(--bg-el);border:1px solid var(--border)}
+    .ldsp-tl3p-list{display:flex;flex-direction:column;gap:7px}
+    .ldsp-tl3p-row{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-md);padding:8px;transition:background .16s var(--ease),border-color .16s var(--ease)}
+    .ldsp-tl3p-row:hover{background:var(--bg-el);border-color:var(--border2)}
+    .ldsp-tl3p-row.ok{border-color:oklch(56% .15 142 / .22)}
+    .ldsp-tl3p-row.warn{border-color:oklch(64% .16 75 / .3)}
+    .ldsp-tl3p-row.danger{border-color:oklch(60% .19 28 / .32)}
+    .ldsp-tl3p-row-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+    .ldsp-tl3p-row-name{min-width:0;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:680;color:var(--txt)}
+    .ldsp-tl3p-dot{width:7px;height:7px;border-radius:50%;background:var(--txt-dim);flex:0 0 auto}
+    .ldsp-tl3p-row.ok .ldsp-tl3p-dot{background:var(--ok)}
+    .ldsp-tl3p-row.warn .ldsp-tl3p-dot{background:var(--warn)}
+    .ldsp-tl3p-row.danger .ldsp-tl3p-dot{background:var(--err)}
+    .ldsp-tl3p-row-value{font-size:11px;font-weight:720;color:var(--txt-sec);white-space:nowrap}
+    .ldsp-tl3p-bar{height:6px;border-radius:999px;background:var(--bg-el);border:1px solid var(--border);overflow:hidden}
+    .ldsp-tl3p-bar-fill{height:100%;width:0;border-radius:999px;background:var(--accent);transition:width .35s var(--ease-out)}
+    .ldsp-tl3p-row.ok .ldsp-tl3p-bar-fill{background:var(--ok)}
+    .ldsp-tl3p-row.warn .ldsp-tl3p-bar-fill{background:var(--warn)}
+    .ldsp-tl3p-row.danger .ldsp-tl3p-bar-fill{background:var(--err)}
+    .ldsp-tl3p-row-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px;font-size:9px;color:var(--txt-mut)}
+    .ldsp-tl3p-note{font-size:10px;line-height:1.45;color:var(--txt-dim)}
+    .ldsp-tl3p-actions{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
+    .ldsp-tl3p-guide-btn{border:1px solid var(--border);background:var(--bg-el);color:var(--txt-sec);border-radius:var(--r-md);padding:6px 9px;font-size:11px;font-weight:680;transition:background .16s var(--ease),border-color .16s var(--ease),color .16s var(--ease)}
+    .ldsp-tl3p-guide-btn:hover{background:var(--bg-hover);border-color:var(--border2);color:var(--txt)}
+    @media (max-width:380px){.ldsp-tl3p-hero{flex-direction:column}.ldsp-tl3p-count{text-align:left}.ldsp-tl3p-stats{grid-template-columns:1fr}.ldsp-tl3p-row-head{align-items:flex-start}.ldsp-tl3p-row-value{font-size:10px}}
+
     @media (prefers-reduced-motion:reduce){
         #ldsp-panel,#ldsp-panel *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
     }`;
@@ -11883,6 +11927,8 @@ a:hover{text-decoration:underline;}
                 this.animRing = true;
                 this.cachedHistory = [];
                 this.cachedReqs = [];
+                this.cachedLevel = null;
+                this.cachedReqsSource = null;
                 this._cloudReqsCache = null;
                 this._cloudReqsCacheTime = 0;
                 this._cloudReqsFailUntil = 0;
@@ -12382,11 +12428,13 @@ a:hover{text-decoration:underline;}
                         <div class="ldsp-tabs ldsp-tabs-auto">
                             <button class="ldsp-tab active" data-tab="reqs"><span class="ldsp-tab-icon">📋</span><span class="ldsp-tab-text">要求</span></button>
                             <button class="ldsp-tab" data-tab="reading"><span class="ldsp-tab-icon">⌛</span><span class="ldsp-tab-text">阅读</span></button>
+                            <button class="ldsp-tab" data-tab="tl3"><span class="ldsp-tab-icon">🎖️</span><span class="ldsp-tab-text">TL3</span></button>
                             <button class="ldsp-tab" data-tab="trends"><span class="ldsp-tab-icon">📖</span><span class="ldsp-tab-text">历史</span></button>
                         </div>
                         <div class="ldsp-content">
                             <div id="ldsp-reqs" class="ldsp-section active"><div class="ldsp-loading"><div class="ldsp-spinner"></div><div>加载中...</div></div></div>
                             <div id="ldsp-reading" class="ldsp-section"><div class="ldsp-loading"><div class="ldsp-spinner"></div><div>加载中...</div></div></div>
+                            <div id="ldsp-tl3" class="ldsp-section"><div class="ldsp-empty"><div class="ldsp-empty-icon">🎖️</div><div class="ldsp-empty-txt">等待升级要求数据...</div></div></div>
                             <div id="ldsp-trends" class="ldsp-section"><div class="ldsp-empty"><div class="ldsp-empty-icon">📖</div><div class="ldsp-empty-txt">加载中...</div></div></div>
                         </div>
                         <div class="ldsp-confirm-overlay">
@@ -12439,6 +12487,7 @@ a:hover{text-decoration:underline;}
                     tabs: this.el.querySelectorAll('.ldsp-tab'),
                     sections: this.el.querySelectorAll('.ldsp-section'),
                     reqs: this.el.querySelector('#ldsp-reqs'),
+                    tl3: this.el.querySelector('#ldsp-tl3'),
                     trends: this.el.querySelector('#ldsp-trends'),
                     leaderboard: this.el.querySelector('#ldsp-leaderboard'),
                     activity: this.el.querySelector('#ldsp-activity'),
@@ -12966,6 +13015,8 @@ a:hover{text-decoration:underline;}
                             this.cachedReqs.length && this.renderer.renderReqs(this.cachedReqs);
                         } else if (tab.dataset.tab === 'reading') {
                             this._renderReadingDashboard();
+                        } else if (tab.dataset.tab === 'tl3') {
+                            this._renderTL3Progress();
                         } else if (tab.dataset.tab === 'trends') {
                             this._loadReadTopicsIntoTrends();
                         } else if (tab.dataset.tab === 'leaderboard') {
@@ -14638,6 +14689,9 @@ a:hover{text-decoration:underline;}
                 const history = this.historyMgr.getHistory();
                 this.cachedHistory = history;
                 this.cachedReqs = []; // 空的升级要求数组
+                this.cachedLevel = numLevel;
+                this.cachedReqsSource = 'empty';
+                this._renderTL3IfActive();
                 this._renderTrends(history, []);
             }
 
@@ -14799,6 +14853,9 @@ a:hover{text-decoration:underline;}
                 
                 this.cachedHistory = history;
                 this.cachedReqs = orderedReqs;
+                this.cachedLevel = normalizedLevel;
+                this.cachedReqsSource = 'cloud';
+                this._renderTL3IfActive();
                 
                 this._renderTrends(history, orderedReqs);
                 this._setLastVisit(histData);
@@ -15148,6 +15205,9 @@ a:hover{text-decoration:underline;}
                 // 保存缓存
                 this.cachedHistory = history;
                 this.cachedReqs = reqs;
+                this.cachedLevel = levelForRender;
+                this.cachedReqsSource = 'summary';
+                this._renderTL3IfActive();
                 this.prevReqs = reqs;
                 
                 // 0-1级用户也触发数据同步（阅读时间等）
@@ -15635,6 +15695,9 @@ a:hover{text-decoration:underline;}
 
                 this.cachedHistory = history;
                 this.cachedReqs = orderedReqs;
+                this.cachedLevel = Number.parseInt(level, 10);
+                this.cachedReqsSource = 'connect';
+                this._renderTL3IfActive();
 
                 this._renderTrends(history, orderedReqs);
                 this._setLastVisit(histData);
@@ -15687,6 +15750,210 @@ a:hover{text-decoration:underline;}
 
             _setLastVisit(data) {
                 this.storage.set('lastVisit', { ts: Date.now(), data });
+            }
+
+
+            _getCurrentTrustLevel() {
+                const cached = Number.parseInt(this.cachedLevel, 10);
+                if (Number.isFinite(cached)) return cached;
+                const oauthUser = this.oauth?.getUserInfo?.();
+                const oauthLevel = Number.parseInt(oauthUser?.trust_level ?? oauthUser?.trustLevel, 10);
+                if (Number.isFinite(oauthLevel)) return oauthLevel;
+                const levelText = this.$?.user?.textContent?.match(/(?:等级|TL)\s*(\d+)/i)?.[1];
+                const domLevel = Number.parseInt(levelText, 10);
+                return Number.isFinite(domLevel) ? domLevel : 2;
+            }
+
+            _tl3MetricDefinitions() {
+                return [
+                    { key: '访问次数', label: '访问天数', help: '过去 100 天至少访问 50 天', aliases: ['访问次数', '访问天数'] },
+                    { key: '回复的话题', label: '回复话题', help: '至少回复 10 个不同的非私信话题', aliases: ['回复的话题', '回复话题', '回复'] },
+                    { key: '浏览的话题', label: '浏览话题', help: '阅读至少 25% 的新话题，上限按 500 计算', aliases: ['浏览的话题', '浏览话题'] },
+                    { key: '已读帖子', label: '已读帖子', help: '阅读至少 25% 的新帖子，上限按 20000 计算', aliases: ['已读帖子', '浏览帖子'] },
+                    { key: '点赞', label: '送出赞', help: '送出至少 30 个赞', aliases: ['点赞', '送出赞'] },
+                    { key: '获赞', label: '获赞', help: '收到至少 20 个赞', aliases: ['获赞'] },
+                    { key: '获赞：单日最高数量', label: '单日获赞', help: '单日获赞分布要求，避免过度集中', aliases: ['获赞：单日最高数量', '获赞天数'] },
+                    { key: '获赞：点赞用户数量', label: '获赞用户', help: '至少来自 5 位不同用户的点赞', aliases: ['获赞：点赞用户数量', '获赞用户'] },
+                    { key: '被举报的帖子', label: '被举报帖子', help: '不能超过 5 个被认可的垃圾/冒犯举报', aliases: ['被举报的帖子', '被举报帖子'], reverse: true },
+                    { key: '发起举报的用户', label: '举报用户', help: '举报来源用户不能超过 5 位', aliases: ['发起举报的用户', '发起举报', '举报用户'], reverse: true },
+                    { key: '被禁言（过去 6 个月）', label: '6个月禁言', help: '过去 6 个月不能被禁言', aliases: ['被禁言（过去 6 个月）', '被禁言'], reverse: true },
+                    { key: '被封禁（过去 6 个月）', label: '6个月封禁', help: '过去 6 个月不能被封禁', aliases: ['被封禁（过去 6 个月）', '被封禁'], reverse: true }
+                ];
+            }
+
+            _tl3NormalizeMetricKey(name) {
+                return Utils.normalizeMetricName(this._normalizeConnectRequirementName(name || ''));
+            }
+
+            _formatTL3Number(value) {
+                const num = Utils.toSafeInt(value, 0);
+                return Math.abs(num) >= 1000 ? num.toLocaleString('zh-CN') : String(num);
+            }
+
+            _getTL3WindowLabel() {
+                const pad = n => String(n).padStart(2, '0');
+                const fmt = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+                const end = new Date();
+                const start = new Date(end);
+                start.setDate(start.getDate() - 99);
+                return `${fmt(start)} 至 ${fmt(end)}`;
+            }
+
+            _buildTL3ProgressData(reqs = this.cachedReqs, level = this._getCurrentTrustLevel()) {
+                const definitions = this._tl3MetricDefinitions();
+                const targetMap = this._getRequirementTargetMap(2);
+                const list = Array.isArray(reqs) ? reqs : [];
+                const source = this.cachedReqsSource || 'unknown';
+                const byName = new Map();
+
+                list.forEach(req => {
+                    if (!req?.name) return;
+                    const keys = new Set([
+                        this._tl3NormalizeMetricKey(req.name),
+                        Utils.normalizeMetricName(req.name),
+                        Utils.simplifyName?.(req.name) || req.name
+                    ]);
+                    keys.forEach(key => {
+                        if (!key) return;
+                        const current = Utils.toSafeInt(req.currentValue, 0);
+                        const existing = byName.get(key);
+                        if (!existing || current > Utils.toSafeInt(existing.currentValue, 0)) {
+                            byName.set(key, req);
+                        }
+                    });
+                });
+
+                const rows = definitions.map(def => {
+                    const candidates = new Set([def.key, def.label, ...(def.aliases || [])]);
+                    Utils.getMetricCandidates(def.key).forEach(x => candidates.add(x));
+                    let req = null;
+                    for (const candidate of candidates) {
+                        const keys = [
+                            this._tl3NormalizeMetricKey(candidate),
+                            Utils.normalizeMetricName(candidate),
+                            Utils.simplifyName?.(candidate) || candidate
+                        ];
+                        req = keys.map(k => byName.get(k)).find(Boolean);
+                        if (req) break;
+                    }
+
+                    const current = Utils.toSafeInt(req?.currentValue, 0);
+                    const fallbackTarget = targetMap[def.key] ?? targetMap[this._tl3NormalizeMetricKey(def.key)] ?? 0;
+                    const parsedTarget = Utils.toSafeInt(req?.requiredValue, 0);
+                    const required = parsedTarget > 0 || fallbackTarget === 0 ? parsedTarget || fallbackTarget : fallbackTarget;
+                    const reverse = def.reverse || req?.isReverse || PATTERNS.REVERSE.test(def.key);
+                    const success = reverse ? current <= required : current >= required;
+                    let percent;
+                    if (reverse) {
+                        percent = required <= 0 ? (success ? 100 : 0) : Math.max(0, Math.min(100, 100 - ((current - required) / Math.max(required, 1)) * 100));
+                    } else {
+                        percent = required <= 0 ? 0 : Math.max(0, Math.min(100, (current / required) * 100));
+                    }
+                    const missing = reverse ? Math.max(0, current - required) : Math.max(0, required - current);
+                    const status = success ? 'ok' : (percent >= 70 ? 'warn' : 'danger');
+                    const valueText = reverse
+                        ? `${this._formatTL3Number(current)} / ≤ ${this._formatTL3Number(required)}`
+                        : `${this._formatTL3Number(current)} / ${this._formatTL3Number(required)}`;
+                    const hint = success
+                        ? '已达标'
+                        : (reverse ? `超出 ${this._formatTL3Number(missing)}` : `还差 ${this._formatTL3Number(missing)}`);
+
+                    return { ...def, current, required, reverse, success, percent, missing, status, valueText, hint, hasData: !!req };
+                });
+
+                const done = rows.filter(r => r.success).length;
+                const total = rows.length;
+                const overall = total ? Math.round(rows.reduce((sum, row) => sum + row.percent, 0) / total) : 0;
+                const numericLevel = Number.parseInt(level, 10);
+                const currentLevel = Number.isFinite(numericLevel) ? numericLevel : 2;
+                const allOK = done === total && total > 0;
+                const isTL3OrAbove = currentLevel >= 3;
+                const statusClass = allOK ? 'ok' : (rows.some(r => r.status === 'danger') ? 'danger' : 'warn');
+                const title = allOK
+                    ? (isTL3OrAbove ? 'TL3 保级安全' : '已满足 TL3 核心要求')
+                    : (isTL3OrAbove ? 'TL3 保级有风险' : 'TL3 晋级进行中');
+                const mode = isTL3OrAbove ? '保级' : '晋级';
+                const firstTodo = rows.filter(r => !r.success && !r.reverse).sort((a, b) => (b.missing / Math.max(b.required, 1)) - (a.missing / Math.max(a.required, 1)))[0]
+                    || rows.find(r => !r.success)
+                    || null;
+                const advice = allOK
+                    ? '所有核心要求都已满足。继续保持日常访问、阅读和自然互动，就能稳稳维持活跃用户状态。'
+                    : (firstTodo?.reverse
+                        ? `优先处理「${firstTodo.label}」，当前超出 ${this._formatTL3Number(firstTodo.missing)}，这是保级/晋级的硬性风险项。`
+                        : `优先补「${firstTodo?.label || '未完成项'}」，还差 ${this._formatTL3Number(firstTodo?.missing || 0)}；这个页面会随着 Connect 数据刷新自动更新。`);
+                const sourceLabel = source === 'connect' ? 'Connect 100天滚动数据'
+                    : source === 'cloud' ? '最近一次云端同步数据'
+                    : source === 'summary' ? 'Summary 累计数据（仅参考）'
+                    : source === 'empty' ? '暂无要求数据'
+                    : '本地缓存数据';
+
+                return { rows, done, total, overall, currentLevel, allOK, statusClass, title, mode, advice, source, sourceLabel, windowLabel: this._getTL3WindowLabel() };
+            }
+
+            _renderTL3Progress() {
+                const container = this.$?.tl3;
+                if (!container) return;
+                const data = this._buildTL3ProgressData();
+                const esc = value => Utils.escapeHtml(String(value ?? ''));
+
+                if (!Array.isArray(this.cachedReqs) || !this.cachedReqs.length) {
+                    container.innerHTML = `
+                        <div class="ldsp-tl3p">
+                            <div class="ldsp-tl3p-card ldsp-tl3p-hero warn">
+                                <div>
+                                    <div class="ldsp-tl3p-title"><span>🎖️</span><span>TL3 进度等待数据</span></div>
+                                    <div class="ldsp-tl3p-sub">刷新后会优先读取 Connect 的过去 100 天滚动要求；如果 Connect 不可用，会显示可参考的兜底数据。</div>
+                                </div>
+                                <div class="ldsp-tl3p-badge">等待刷新</div>
+                            </div>
+                            <div class="ldsp-tl3p-card ldsp-tl3p-advice"><span class="ldsp-tl3p-advice-icon">💡</span><div>建议先打开“要求”页刷新一次，获取当前账号的真实 TL3 要求数据。</div></div>
+                            <div class="ldsp-tl3p-actions"><button class="ldsp-tl3p-guide-btn" data-tl3-guidelines>查看 TL3 准则</button></div>
+                        </div>`;
+                    container.querySelector('[data-tl3-guidelines]')?.addEventListener('click', e => { e.stopPropagation(); this._showTL3Guidelines(); });
+                    return;
+                }
+
+                const rowHtml = data.rows.map(row => `
+                    <div class="ldsp-tl3p-row ${row.status}">
+                        <div class="ldsp-tl3p-row-head">
+                            <div class="ldsp-tl3p-row-name"><span class="ldsp-tl3p-dot"></span><span>${esc(row.label)}</span></div>
+                            <div class="ldsp-tl3p-row-value">${esc(row.valueText)}</div>
+                        </div>
+                        <div class="ldsp-tl3p-bar" aria-hidden="true"><div class="ldsp-tl3p-bar-fill" style="width:${Math.round(row.percent)}%"></div></div>
+                        <div class="ldsp-tl3p-row-foot"><span>${esc(row.help)}</span><b>${esc(row.hint)}</b></div>
+                    </div>`).join('');
+
+                const note = data.source === 'summary'
+                    ? '注意：当前为 summary 累计统计兜底，不等于严格的过去 100 天窗口；Connect 恢复后会自动切换为更准确的数据。'
+                    : '说明：TL3 是滚动窗口要求，达到后也需要持续保持；掉出过去 100 天要求可能会降回 TL2。';
+
+                container.innerHTML = `
+                    <div class="ldsp-tl3p">
+                        <div class="ldsp-tl3p-card ldsp-tl3p-hero ${data.statusClass}">
+                            <div>
+                                <div class="ldsp-tl3p-title"><span>🎖️</span><span>${esc(data.title)}</span><span class="ldsp-tl3p-badge">${esc(data.mode)}模式</span></div>
+                                <div class="ldsp-tl3p-sub">当前等级 TL${esc(data.currentLevel)} · ${esc(data.sourceLabel)}</div>
+                                <div class="ldsp-tl3p-window">🗓️ 统计窗口：${esc(data.windowLabel)}</div>
+                            </div>
+                            <div class="ldsp-tl3p-count"><b>${data.done}</b>/${data.total}<div>已达标</div></div>
+                        </div>
+                        <div class="ldsp-tl3p-stats">
+                            <div class="ldsp-tl3p-stat"><div class="ldsp-tl3p-stat-val">${data.overall}%</div><div class="ldsp-tl3p-stat-lbl">平均完成度</div></div>
+                            <div class="ldsp-tl3p-stat"><div class="ldsp-tl3p-stat-val">${data.rows.filter(r => !r.success).length}</div><div class="ldsp-tl3p-stat-lbl">待处理项目</div></div>
+                            <div class="ldsp-tl3p-stat"><div class="ldsp-tl3p-stat-val">100天</div><div class="ldsp-tl3p-stat-lbl">滚动周期</div></div>
+                        </div>
+                        <div class="ldsp-tl3p-card ldsp-tl3p-advice"><span class="ldsp-tl3p-advice-icon">💡</span><div>${esc(data.advice)}</div></div>
+                        <div class="ldsp-tl3p-list">${rowHtml}</div>
+                        <div class="ldsp-tl3p-card ldsp-tl3p-note">${esc(note)}</div>
+                        <div class="ldsp-tl3p-actions"><button class="ldsp-tl3p-guide-btn" data-tl3-guidelines>查看完整 TL3 准则</button></div>
+                    </div>`;
+                container.querySelector('[data-tl3-guidelines]')?.addEventListener('click', e => { e.stopPropagation(); this._showTL3Guidelines(); });
+            }
+
+            _renderTL3IfActive() {
+                if (this.el?.querySelector('.ldsp-tab[data-tab="tl3"].active')) {
+                    this._renderTL3Progress();
+                }
             }
 
             _renderTrends(history, reqs) {
