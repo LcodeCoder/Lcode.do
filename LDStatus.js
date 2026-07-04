@@ -11770,6 +11770,7 @@ a:hover{text-decoration:underline;}
                                         <span class="ldsp-settings-head-title">功能启用</span>
                                     </div>
                                     ${CURRENT_SITE.domain === 'linux.do' ? '<label class="ldsp-settings-toggle"><span>LDC 按钮</span><input type="checkbox" data-action-key="ldc" checked></label><label class="ldsp-settings-toggle"><span>士多按钮</span><input type="checkbox" data-action-key="shop" checked></label><label class="ldsp-settings-toggle"><span>CDK 按钮</span><input type="checkbox" data-action-key="cdk" checked></label>' : ''}
+                                    <label class="ldsp-settings-toggle"><span>🔍 标题悬浮预览</span><input type="checkbox" data-feature-key="topicPreview" checked></label>
                                 </div>
                                 <div class="ldsp-settings-view" data-settings-view="actions-order">
                                     <div class="ldsp-settings-head">
@@ -11920,6 +11921,7 @@ a:hover{text-decoration:underline;}
                     settingsRequirementsOptions: this.el.querySelectorAll('.ldsp-settings-option[data-requirements-display-mode]'),
                     settingsThemeOptions: this.el.querySelectorAll('.ldsp-settings-option[data-theme-mode]'),
                     settingsActionInputs: this.el.querySelectorAll('.ldsp-settings-toggle input[data-action-key]'),
+                    settingsFeatureInputs: this.el.querySelectorAll('.ldsp-settings-toggle input[data-feature-key]'),
                     settingsGoalRange: this.el.querySelector('.ldsp-settings-goal-range'),
                     settingsGoalNumber: this.el.querySelector('.ldsp-settings-goal-number'),
                     settingsFontRange: this.el.querySelector('.ldsp-settings-font-range'),
@@ -12128,7 +12130,17 @@ a:hover{text-decoration:underline;}
                         return;
                     }
                     const input = e.target.closest('input[data-action-key]');
-                    if (!input) return;
+                    if (!input) {
+                        // 功能开关（非按钮类）
+                        const featureInput = e.target.closest('input[data-feature-key]');
+                        if (featureInput) {
+                            const key = featureInput.dataset.featureKey;
+                            if (key === 'topicPreview') {
+                                this.storage.setGlobalNow('topicPreviewEnabled', !!featureInput.checked);
+                            }
+                        }
+                        return;
+                    }
                     const key = input.dataset.actionKey;
                     if (!key) return;
                     this._setActionVisibility(key, !!input.checked);
@@ -13077,6 +13089,14 @@ a:hover{text-decoration:underline;}
                 const actionSummary = totalCount > 0 ? `${enabledCount}/${totalCount} 开启` : '';
                 this.$.settingsActionsValues?.forEach(el => {
                     el.textContent = actionSummary;
+                });
+
+                // 同步功能开关状态
+                this.$.settingsFeatureInputs?.forEach(input => {
+                    const key = input.dataset.featureKey;
+                    if (key === 'topicPreview') {
+                        input.checked = this.storage.getGlobal('topicPreviewEnabled', true);
+                    }
                 });
 
                 const rdm = this.storage.getGlobal('requirementsDisplayMode', 'all');
@@ -18686,8 +18706,11 @@ a:hover{text-decoration:underline;}
 
             // 帖子悬浮预览（鼠标悬停标题 1s 后弹窗展示帖子信息）
             try {
-                const topicPreview = new TopicPreview();
-                topicPreview.init();
+                const previewEnabled = activePanel?.storage?.getGlobal('topicPreviewEnabled', true);
+                if (previewEnabled !== false) {
+                    const topicPreview = new TopicPreview();
+                    topicPreview.init();
+                }
             } catch (e) {
                 Logger.error('TopicPreview initialization failed:', e);
             }
