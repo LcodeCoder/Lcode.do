@@ -6087,7 +6087,33 @@
         #ldsp-panel,#ldsp-panel *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
     }`;
 
-                return (css + polish)
+
+                const settingsSheet = `
+    /* Keep original UI, but make settings a large readable sheet */
+    #ldsp-panel.settings-open{overflow:visible!important;transform:none!important}
+    #ldsp-panel.settings-open .ldsp-body::before{content:'';position:absolute;inset:0;z-index:110;background:rgba(0,0,0,.28);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);pointer-events:none;border-radius:0 0 var(--r-xl) var(--r-xl);animation:ldsp-settings-dim .18s var(--ease) both}
+    #ldsp-panel.light.settings-open .ldsp-body::before{background:rgba(255,255,255,.42)}
+    @keyframes ldsp-settings-dim{from{opacity:0}to{opacity:1}}
+    .ldsp-settings-menu{position:fixed!important;top:64px!important;left:12px!important;right:auto!important;bottom:auto!important;width:min(calc(var(--w) - 16px),calc(100vw - 24px))!important;min-width:min(260px,calc(100vw - 24px))!important;max-width:min(420px,calc(100vw - 24px))!important;max-height:min(560px,calc(100vh - 76px))!important;padding:10px!important;box-sizing:border-box!important;overflow:hidden auto!important;border-radius:var(--r-xl)!important;border:1px solid var(--border2)!important;background:var(--bg-card)!important;box-shadow:var(--shadow-lg)!important;z-index:180!important;transform:translateY(8px) scale(.985)!important;opacity:0!important;pointer-events:none!important;backdrop-filter:saturate(140%) blur(18px)!important;-webkit-backdrop-filter:saturate(140%) blur(18px)!important}
+    .ldsp-settings-menu.show{opacity:1!important;pointer-events:auto!important;transform:translateY(0) scale(1)!important;animation:ldsp-settings-sheet-in .22s var(--ease-out) both}
+    .ldsp-settings-menu.drop-up{bottom:auto!important}
+    .ldsp-settings-menu[data-view],.ldsp-settings-menu[data-view="reading-goal"]{max-width:min(420px,calc(100vw - 24px))!important}
+    @keyframes ldsp-settings-sheet-in{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+    .ldsp-settings-view{display:none!important;min-height:100%;padding:2px!important}
+    .ldsp-settings-view.active{display:flex!important;flex-direction:column!important;gap:8px!important;animation:ldsp-soft-in var(--dur) var(--ease-out)}
+    .ldsp-settings-head{position:sticky!important;top:-10px!important;z-index:2!important;margin:0 0 4px!important;padding:10px 4px 12px!important;background:linear-gradient(180deg,var(--bg-card) 76%,transparent)!important}
+    .ldsp-settings-head-title{font-size:14px!important;font-weight:780!important}
+    .ldsp-settings-nav,.ldsp-settings-option,.ldsp-settings-toggle,.ldsp-settings-order-item{min-height:44px!important;padding:10px 12px!important}
+    .ldsp-settings-view[data-settings-view="reading-goal"] .ldsp-settings-goal-wrap{gap:14px!important;padding:8px!important}
+    .ldsp-settings-view[data-settings-view="reading-goal"] .ldsp-settings-goal-row{display:grid!important;grid-template-columns:1fr 96px auto!important;min-height:58px!important;gap:10px!important;padding:12px!important;border-radius:12px!important}
+    .ldsp-settings-goal-label{font-size:12px!important;font-weight:700!important}
+    .ldsp-settings-goal-number{width:96px!important;height:38px!important;text-align:center!important;font-size:18px!important;font-weight:800!important}
+    .ldsp-settings-goal-range{height:34px!important;min-height:34px!important}
+    .ldsp-settings-goal-hint{font-size:12px!important;line-height:1.55!important;padding:10px 12px!important;border-radius:10px!important;background:var(--bg-el)!important;border:1px solid var(--border)!important}
+    @media (max-width:430px){.ldsp-settings-menu{top:56px!important;left:6px!important;width:calc(100vw - 12px)!important;min-width:0!important;max-width:calc(100vw - 12px)!important;padding:8px!important}.ldsp-settings-view[data-settings-view="reading-goal"] .ldsp-settings-goal-row{grid-template-columns:1fr!important}.ldsp-settings-goal-number{width:100%!important}}
+                `;
+
+                return (css + polish + settingsSheet)
                     .replace('font-size:var(--fs);', 'font-size:calc(var(--fs) * var(--ldsp-font-scale,1));')
                     .replace(/font-size\s*:\s*(\d+(?:\.\d+)?)px/g, 'font-size:calc($1px * var(--ldsp-font-scale,1))');
             }
@@ -13626,34 +13652,29 @@ a:hover{text-decoration:underline;}
             _positionSettingsMenu() {
                 const menu = this.$.settingsMenu;
                 if (!menu) return;
-
+                // Keep the bigger settings sheet, but constrain it to the floating
+                // panel instead of stretching across the whole browser viewport.
                 menu.classList.remove('drop-up');
-                menu.style.maxHeight = '';
 
-                const rect = menu.getBoundingClientRect();
                 const panelRect = this.el.getBoundingClientRect();
-                const { vh } = Screen.getViewport();
-                // 面板 overflow:hidden，菜单绝对定位在面板内 —— 超出面板底边的部分不可见且无法滚动到。
-                // 所以以「面板底边」和「视口底边」中更靠上的一条为界，给菜单封顶高度。
-                const menuTop = rect.top;
-                const hardBottom = Math.min(vh - 8, panelRect.bottom - 8);
-                const below = Math.max(140, hardBottom - menuTop);
-                const canOpenUp = rect.bottom > hardBottom && panelRect.top > Math.min(220, vh * 0.4);
+                const headerRect = this.$.header?.getBoundingClientRect?.() || panelRect;
+                const vw = window.innerWidth || document.documentElement.clientWidth || panelRect.right;
+                const vh = window.innerHeight || document.documentElement.clientHeight || panelRect.bottom;
+                const gap = 8;
+                const minWidth = Math.min(260, Math.max(180, vw - gap * 2));
+                const left = Math.max(gap, Math.min(panelRect.left + gap, vw - minWidth - gap));
+                const width = Math.max(minWidth, Math.min(panelRect.width - gap * 2, 420, vw - left - gap));
+                const top = Math.max(gap, Math.min(headerRect.bottom + gap, vh - 190));
+                const panelBottom = Math.min(panelRect.bottom - gap, vh - gap);
+                const height = Math.max(180, Math.min(560, panelBottom - top));
 
-                if (canOpenUp) {
-                    menu.classList.add('drop-up');
-                    requestAnimationFrame(() => {
-                        const upRect = menu.getBoundingClientRect();
-                        const topBound = Math.max(panelRect.top + 8, 8);
-                        const maxUp = Math.max(140, Math.min(560, upRect.bottom - topBound));
-                        menu.style.maxHeight = `${maxUp}px`;
-                    });
-                    return;
-                }
-
-                if (rect.bottom > hardBottom) {
-                    menu.style.maxHeight = `${Math.max(140, Math.min(560, below))}px`;
-                }
+                menu.style.setProperty('top', `${top}px`, 'important');
+                menu.style.setProperty('left', `${left}px`, 'important');
+                menu.style.setProperty('right', 'auto', 'important');
+                menu.style.setProperty('bottom', 'auto', 'important');
+                menu.style.setProperty('width', `${width}px`, 'important');
+                menu.style.setProperty('height', `${height}px`, 'important');
+                menu.style.setProperty('max-height', `${height}px`, 'important');
             }
 
             _refreshReqsFromCache() {
@@ -13668,6 +13689,7 @@ a:hover{text-decoration:underline;}
                 this._syncSettingsMenuState();
                 this._setSettingsView('root');
                 this.el.classList.add('settings-open');
+                this._positionSettingsMenu();
                 menu.classList.add('show');
                 menu.setAttribute('aria-hidden', 'false');
                 requestAnimationFrame(() => this._positionSettingsMenu());
@@ -13678,7 +13700,13 @@ a:hover{text-decoration:underline;}
                 if (!menu) return;
                 menu.classList.remove('show');
                 menu.classList.remove('drop-up');
-                menu.style.maxHeight = '';
+                menu.style.removeProperty('top');
+                menu.style.removeProperty('left');
+                menu.style.removeProperty('right');
+                menu.style.removeProperty('bottom');
+                menu.style.removeProperty('width');
+                menu.style.removeProperty('height');
+                menu.style.removeProperty('max-height');
                 menu.setAttribute('aria-hidden', 'true');
                 this.el.classList.remove('settings-open');
                 this._setSettingsView('root');
